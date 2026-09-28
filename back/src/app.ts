@@ -25,16 +25,18 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // In dev mode allow any localhost origin or no origin (Postman/curl), 
-      // or if it matches clientUrl, or ends with .vercel.app
+      // or if it matches clientUrl, or ends with .vercel.app, or local origins
       if (
         !origin || 
         env.isDev || 
         origin === env.clientUrl || 
-        origin.endsWith('.vercel.app')
+        origin.endsWith('.vercel.app') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
       ) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(null, false);
       }
     },
     credentials: true,
