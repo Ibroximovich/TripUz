@@ -8,8 +8,8 @@ import { AuthRequest } from '../types';
  */
 export async function googleLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { idToken } = req.body;
-    const result = await authService.loginWithGoogle(idToken);
+    const { idToken, role } = req.body;
+    const result = await authService.loginWithGoogle(idToken, role);
 
     res.status(200).json({
       success: true,

@@ -14,12 +14,17 @@ interface AuthTokens {
 /**
  * Verify Google ID token, find or create the user, and return JWTs.
  */
-export async function loginWithGoogle(idToken: string): Promise<AuthTokens> {
+export async function loginWithGoogle(idToken: string, requestedRole?: Role): Promise<AuthTokens> {
   const googlePayload = await verifyGoogleToken(idToken);
 
-  const userRole = (googlePayload.email.includes('guide') || googlePayload.email.includes('jasur'))
-    ? Role.GUIDE
-    : Role.TOURIST;
+  let userRole: Role;
+  if (requestedRole) {
+    userRole = requestedRole;
+  } else if (googlePayload.email.includes('guide') || googlePayload.email.includes('jasur')) {
+    userRole = Role.GUIDE;
+  } else {
+    userRole = Role.TOURIST;
+  }
 
   const targetId = googlePayload.sub && googlePayload.sub.startsWith('google-mock-') ? googlePayload.sub : undefined;
 
