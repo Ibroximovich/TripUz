@@ -43,6 +43,31 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 /**
+ * Public routes (e.g. /login): if user is already logged in, redirect to their dashboard/home.
+ */
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (isAuthenticated && user) {
+    const dest = user.role === 'GUIDE' || user.role === 'ADMIN' ? '/guide/dashboard' : '/home';
+    return <Navigate to={dest} replace />;
+  }
+  return <>{children}</>;
+};
+
+/**
+ * Root URL (/) handler: redirects authenticated users to their dashboard/home,
+ * and guests to /login.
+ */
+const RootRedirect: React.FC = () => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (isAuthenticated && user) {
+    const dest = user.role === 'GUIDE' || user.role === 'ADMIN' ? '/guide/dashboard' : '/home';
+    return <Navigate to={dest} replace />;
+  }
+  return <Navigate to="/login" replace />;
+};
+
+/**
  * On mount: if the stored access token is expired (or about to expire in <60s),
  * silently attempt a refresh. This handles the F5 / page reload scenario.
  */
@@ -65,8 +90,12 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
             } else {
               logout();
             }
-          } catch {
-            logout();
+          } catch (err: any) {
+            // Only log out if token was explicitly rejected (401 / 403).
+            // Do NOT log out on temporary network issues or 5xx/404 during backend deploys.
+            if (err?.response?.status === 401 || err?.response?.status === 403) {
+              logout();
+            }
           }
         }
       }
@@ -100,12 +129,26 @@ export const App: React.FC = () => {
         <BrowserRouter>
           <AppInitializer>
             <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/guide/login" element={<Login />} />
+              {/* Public Routes (redirects logged-in users away from /login) */}
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/guide/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
 
               {/* Root redirect */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/" element={<RootRedirect />} />
 
               {/* Protected Guide Routes */}
               <Route
