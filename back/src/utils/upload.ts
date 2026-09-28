@@ -3,11 +3,18 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { HttpError } from '../middlewares/error.middleware';
+import { env } from '../config/env';
 
-const uploadDir = path.join(process.cwd(), 'uploads');
+export const uploadDir = path.resolve(process.cwd(), env.uploadDir);
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+
+const MIME_EXTENSION_MAP: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+};
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -15,17 +22,17 @@ const storage = multer.diskStorage({
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = crypto.randomUUID();
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    cb(null, `exp-${uniqueSuffix}${ext}`);
+    const ext = MIME_EXTENSION_MAP[file.mimetype] || '.jpg';
+    cb(null, `img-${uniqueSuffix}${ext}`);
   },
 });
 
 const fileFilter: multer.Options['fileFilter'] = (_req, file, cb) => {
-  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new HttpError(400, 'Faqat rasm fayllari (JPG, PNG, WEBP, GIF) yuklash mumkin'));
+    cb(new HttpError(400, 'Faqat rasm fayllari (JPG, PNG, WEBP) yuklash mumkin'));
   }
 };
 

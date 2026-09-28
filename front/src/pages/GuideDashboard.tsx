@@ -51,7 +51,7 @@ import {
   LeftOutlined,
   RightOutlined,
 } from '@ant-design/icons';
-import type { UploadFile, UploadFileStatus } from 'antd/es/upload/interface';
+import type { UploadFile, UploadFileStatus, RcFile } from 'antd/es/upload/interface';
 import { useAuthStore } from '../store/useAuthStore';
 import {
   getGuideStats,
@@ -234,6 +234,7 @@ export const GuideDashboard: React.FC = () => {
   // File Upload State
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [uploadingImages, setUploadingImages] = useState<boolean>(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false);
 
   // Currency calculator in modal
   const [modalPriceUsd, setModalPriceUsd] = useState<number>(25);
@@ -437,13 +438,21 @@ export const GuideDashboard: React.FC = () => {
       const urls = res.data?.urls || (res as any).urls;
       if (res.success && urls && urls.length > 0) {
         const uploadedUrl = urls[0];
+        const rcFile = file as RcFile;
         const newFile: UploadFile = {
-          uid: (file as File).name + Date.now(),
-          name: (file as File).name,
+          uid: rcFile.uid || `${rcFile.name}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: rcFile.name,
           status: 'done',
           url: uploadedUrl,
+          thumbUrl: uploadedUrl,
+          response: res,
         };
-        setFileList((prev) => [...prev, newFile]);
+        // 5-shart: Race condition'ni prev => [...prev, newFile] funksional shakli bilan hal qilish
+        setFileList((prev) => {
+          const filtered = prev.filter((item) => item.uid !== newFile.uid);
+          if (filtered.length >= 5) return filtered;
+          return [...filtered, newFile];
+        });
         onSuccess(res, file);
         message.success(t('guide.upload_success'));
       } else {
@@ -458,15 +467,26 @@ export const GuideDashboard: React.FC = () => {
     }
   };
 
+  const handleUploadChange = (info: any) => {
+    // 2-shart: onChange qo'shilganda handleRemoveImage ishlashda davom etishi
+    if (info.file.status === 'removed') {
+      setFileList((prev) => prev.filter((item) => item.uid !== info.file.uid));
+    }
+  };
+
   const handleRemoveImage = (file: UploadFile) => {
     setFileList((prev) => prev.filter((item) => item.uid !== file.uid));
+    return true;
   };
 
   /**
    * Handle Submission of Create/Edit Tour
    */
   const handleSubmitTour = async (values: any) => {
-    const imageUrls = fileList.map((f) => f.url || f.response?.urls?.[0]).filter(Boolean) as string[];
+    // 3-shart: Yuklangan rasmlarning to'liq URL'lari to'g'ri yuborilishini kafolatlash
+    const imageUrls = fileList
+      .map((f) => f.url || f.response?.data?.urls?.[0] || f.response?.urls?.[0])
+      .filter(Boolean) as string[];
 
     if (imageUrls.length === 0) {
       message.error(t('guide.image_required'));
@@ -2052,6 +2072,7 @@ export const GuideDashboard: React.FC = () => {
                 <Upload
                   customRequest={async (options) => {
                     const { file, onSuccess, onError } = options;
+                    setUploadingAvatar(true);
                     try {
                       const res = await uploadExperienceImages([file as File]);
                       const urls = res.data?.urls || (res as any).urls;
@@ -2074,17 +2095,20 @@ export const GuideDashboard: React.FC = () => {
                     } catch (err: any) {
                       onError?.(err);
                       message.error(t('guide.profile.avatar_upload_failed'));
+                    } finally {
+                      setUploadingAvatar(false);
                     }
                   }}
                   showUploadList={false}
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                 >
                   <Button
                     htmlType="button"
                     icon={<UploadOutlined />}
+                    loading={uploadingAvatar}
                     className="bg-[#161F28] border-amber-500/50 text-amber-300 hover:border-amber-400 rounded-xl text-xs font-semibold"
                   >
-                    {t('guide.profile.select_new_avatar')}
+                    {uploadingAvatar ? t('common.loading', 'Yuklanmoqda...') : t('guide.profile.select_new_avatar')}
                   </Button>
                 </Upload>
                 {(uploadedAvatarUrl) && (
@@ -2395,11 +2419,12 @@ export const GuideDashboard: React.FC = () => {
             <Upload.Dragger
               customRequest={handleCustomUpload}
               fileList={fileList}
+              onChange={handleUploadChange}
               onRemove={handleRemoveImage}
               listType="picture-card"
               multiple
               maxCount={5}
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               className="bg-[#161F28] border-dashed border-slate-700 hover:border-[#C2703D] p-4 rounded-xl transition-colors"
             >
               <p className="ant-upload-drag-icon text-center mb-1">

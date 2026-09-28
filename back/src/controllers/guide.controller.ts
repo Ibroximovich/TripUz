@@ -1,4 +1,5 @@
 import { Response, NextFunction } from 'express';
+import { env } from '../config/env';
 import * as guideService from '../services/guide.service';
 import { AuthRequest } from '../types';
 import { UpdateBookingStatusDto } from '../schemas/booking.schema';
@@ -145,7 +146,7 @@ export async function uploadImages(req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    const urls = rawFiles.map((file) => `/uploads/${file.filename}`);
+    const urls = rawFiles.map((file) => `${env.publicBaseUrl}/uploads/${file.filename}`);
 
     res.status(200).json({
       success: true,

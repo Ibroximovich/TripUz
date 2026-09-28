@@ -11,7 +11,7 @@ import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
 const app: Application = express();
 
 // ─── Static Uploads Directory ───────────────────────────────────────────
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/uploads', express.static(path.resolve(process.cwd(), env.uploadDir)));
 
 // ─── Security Middleware ───────────────────────────────────────────────────────
 // Helmet: Swagger UI uchun CSP ni yumshatamiz

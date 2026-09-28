@@ -14,6 +14,8 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   COMMISSION_RATE: z.string().default('0.10'),
   CLIENT_URL: z.string().default('http://localhost:3000'),
+  UPLOAD_DIR: z.string().default('./uploads'),
+  PUBLIC_BASE_URL: z.string().default('http://localhost:5000'),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -35,6 +37,8 @@ export const env = {
   googleClientSecret: parsed.data.GOOGLE_CLIENT_SECRET,
   commissionRate: parseFloat(parsed.data.COMMISSION_RATE),
   clientUrl: parsed.data.CLIENT_URL,
+  uploadDir: parsed.data.UPLOAD_DIR,
+  publicBaseUrl: parsed.data.PUBLIC_BASE_URL.replace(/\/+$/, ''),
   isDev: parsed.data.NODE_ENV === 'development',
   isProd: parsed.data.NODE_ENV === 'production',
 };
