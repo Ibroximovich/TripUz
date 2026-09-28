@@ -54,6 +54,10 @@
     "local_guide": "Mahalliy Gid",
     "all_cities": "Barcha Shaharlar",
     "filter_by_city": "Shahar bo'yicha filter:",
+    "filter_by_date": "Sana bo'yicha filter:",
+    "choose_date": "Sanani tanlang",
+    "clear_filter": "Filtrni tozalash",
+    "tours_count_short": "ta ekskursiya",
     "sort_by": "Saralash:",
     "price_asc": "Arzondan qimmatga",
     "price_desc": "Qimmatdan arzon",
@@ -101,7 +105,11 @@
     "subtitle": "Samarqand, Buxoro, Toshkent va Xiva bo'ylab sertifikatlangan gidlar tomonidan yaratilgan saralangan turlar.",
     "badge": "Active Local Experiences",
     "no_tours_found": "Tez orada yangi turlar qo'shiladi",
-    "no_tours_subtitle": "Ushbu parametrlar bo'yicha aktiv ekskursiyalar topilmadi."
+    "no_tours_subtitle": "Ushbu parametrlar bo'yicha aktiv ekskursiyalar topilmadi.",
+    "filter_active": "Tanlangan sana bo'yicha turlar:",
+    "no_tours_for_date": "Ushbu sanada mavjud ekskursiyalar topilmadi",
+    "try_another_date": "Boshqa sanani tanlab ko'ring yoki filtrni tozalang",
+    "show_all_dates": "Barcha sanalarni ko'rsatish"
   },
   "experience": {
     "not_found": "Ekskursiya Topilmadi",

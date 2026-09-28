@@ -54,6 +54,10 @@
     "local_guide": "Local Guide",
     "all_cities": "All Cities",
     "filter_by_city": "Filter by city:",
+    "filter_by_date": "Filter by date:",
+    "choose_date": "Select date",
+    "clear_filter": "Clear filter",
+    "tours_count_short": "tours",
     "sort_by": "Sort:",
     "price_asc": "Price: Low to High",
     "price_desc": "Price: High to Low",
@@ -101,7 +105,11 @@
     "subtitle": "Handpicked tours across Samarkand, Bukhara, Tashkent and Khiva by certified local guides.",
     "badge": "Active Local Experiences",
     "no_tours_found": "New tours coming soon",
-    "no_tours_subtitle": "No active experiences found for these parameters."
+    "no_tours_subtitle": "No active experiences found for these parameters.",
+    "filter_active": "Tours for selected date:",
+    "no_tours_for_date": "No tours available for this date",
+    "try_another_date": "Try choosing another date or clear the filter",
+    "show_all_dates": "Show all tours"
   },
   "experience": {
     "not_found": "Experience Not Found",

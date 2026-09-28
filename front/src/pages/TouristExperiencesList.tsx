@@ -146,12 +146,12 @@ export const TouristExperiencesList: React.FC = () => {
             {/* Date Filter */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <CalendarOutlined className="text-[#C2703D]" /> {t('common.filter_by_date', "Sana bo'yicha filter:")}
+                <CalendarOutlined className="text-[#C2703D]" /> {t('common.filter_by_date')}
               </span>
               <DatePicker
                 value={selectedDate}
                 onChange={(date) => setSelectedDate(date)}
-                placeholder={t('common.choose_date', 'Sanani tanlang')}
+                placeholder={t('common.choose_date')}
                 format="DD.MM.YYYY"
                 allowClear
                 popupClassName="dark-calendar-dropdown"
@@ -196,9 +196,9 @@ export const TouristExperiencesList: React.FC = () => {
           <div className="flex items-center justify-between bg-[#161F28] border border-[#C2703D]/40 px-4 py-2.5 rounded-2xl text-xs shadow-sm">
             <span className="text-slate-300 flex items-center gap-2 flex-wrap">
               <CalendarOutlined className="text-[#C2703D]" />
-              {t('catalog.filter_active', "Tanlangan sana bo'yicha turlar:")}{' '}
+              {t('catalog.filter_active')}{' '}
               <strong className="text-amber-400 font-semibold">{selectedDate.format('DD.MM.YYYY')}</strong>
-              <span className="text-slate-500">({filteredExperiences.length} ta ekskursiya)</span>
+              <span className="text-slate-500">({filteredExperiences.length} {t('common.tours_count_short')})</span>
             </span>
             <Button
               size="small"
@@ -206,7 +206,7 @@ export const TouristExperiencesList: React.FC = () => {
               onClick={() => setSelectedDate(null)}
               className="text-slate-400 hover:text-white text-xs font-semibold h-auto p-0"
             >
-              ✕ {t('common.clear_filter', 'Filtrni tozalash')}
+              ✕ {t('common.clear_filter')}
             </Button>
           </div>
         )}
@@ -259,12 +259,12 @@ export const TouristExperiencesList: React.FC = () => {
                 <div className="space-y-1">
                   <span className="text-slate-300 font-bold text-base block">
                     {selectedDate
-                      ? t('catalog.no_tours_for_date', 'Ushbu sanada mavjud ekskursiyalar topilmadi')
+                      ? t('catalog.no_tours_for_date')
                       : t('catalog.no_tours_found')}
                   </span>
                   <span className="text-slate-400 text-xs">
                     {selectedDate
-                      ? t('catalog.try_another_date', "Boshqa sanani tanlab ko'ring yoki filtrni tozalang")
+                      ? t('catalog.try_another_date')
                       : t('catalog.no_tours_subtitle')}
                   </span>
                 </div>
@@ -276,7 +276,7 @@ export const TouristExperiencesList: React.FC = () => {
                   onClick={() => setSelectedDate(null)}
                   className="mt-2 bg-[#C2703D] hover:bg-[#A85B2D] text-white border-none rounded-xl text-xs font-semibold px-4"
                 >
-                  {t('catalog.show_all_dates', "Barcha sanalarni ko'rsatish")}
+                  {t('catalog.show_all_dates')}
                 </Button>
               )}
             </Empty>
