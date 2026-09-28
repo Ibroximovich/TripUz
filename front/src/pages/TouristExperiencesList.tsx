@@ -11,6 +11,7 @@ import {
   Empty,
   Skeleton,
   Alert,
+  DatePicker,
 } from 'antd';
 import {
   EnvironmentOutlined,
@@ -23,6 +24,7 @@ import {
   CalendarOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import { TouristHeader } from '../components/TouristHeader';
 import { ExperienceImageSlider } from './GuideDashboard';
 import { getPublicExperiences } from '../services/tourist.api';
@@ -36,6 +38,7 @@ export const TouristExperiencesList: React.FC = () => {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState<string>('ALL');
   const [sortOrder, setSortOrder] = useState<string>('price_asc');
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 
   // Set page title dynamically
   useEffect(() => {
@@ -70,6 +73,30 @@ export const TouristExperiencesList: React.FC = () => {
     },
   });
 
+  // Set of dates (YYYY-MM-DD) that have scheduled slots across all tours
+  const availableTourDates = React.useMemo(() => {
+    const dates = new Set<string>();
+    experiences.forEach((exp) => {
+      exp.availableDates?.forEach((slot) => {
+        if (slot?.date) {
+          dates.add(dayjs(slot.date).format('YYYY-MM-DD'));
+        }
+      });
+    });
+    return dates;
+  }, [experiences]);
+
+  // Filter experiences by selected date
+  const filteredExperiences = React.useMemo(() => {
+    if (!selectedDate) return experiences;
+    const target = selectedDate.format('YYYY-MM-DD');
+    return experiences.filter((exp) =>
+      exp.availableDates?.some(
+        (slot) => slot?.date && dayjs(slot.date).format('YYYY-MM-DD') === target
+      )
+    );
+  }, [experiences, selectedDate]);
+
   return (
     <div className="min-h-screen bg-[#0F1419] text-[#F5F5F0] font-sans flex flex-col justify-between selection:bg-[#C2703D] selection:text-white">
       {/* Top Navigation */}
@@ -94,26 +121,59 @@ export const TouristExperiencesList: React.FC = () => {
         </div>
 
         {/* Filter and Price Sorting Toolbar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#161F28] p-4 sm:px-6 rounded-2xl border border-slate-800 shadow-md">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <FilterOutlined className="text-[#C2703D]" /> {t('common.filter_by_city')}
-            </span>
-            <Select
-              value={selectedCity}
-              onChange={setSelectedCity}
-              popupClassName="dark-select-dropdown"
-              className="custom-lang-select bg-[#0F1419] border-slate-800 text-slate-200 rounded-xl text-xs w-44"
-              options={[
-                { value: 'ALL', label: `🕌 ${t('common.all_cities')}` },
-                { value: 'Samarqand', label: `🕌 ${t('cities.Samarqand')}` },
-                { value: 'Buxoro', label: `🏰 ${t('cities.Buxoro')}` },
-                { value: 'Toshkent', label: `🏙️ ${t('cities.Toshkent')}` },
-                { value: 'Xiva', label: `🏛️ ${t('cities.Xiva')}` },
-              ]}
-            />
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-[#161F28] p-4 sm:px-6 rounded-2xl border border-slate-800 shadow-md">
+          <div className="flex items-center gap-3 sm:gap-6 flex-wrap">
+            {/* City Filter */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <FilterOutlined className="text-[#C2703D]" /> {t('common.filter_by_city')}
+              </span>
+              <Select
+                value={selectedCity}
+                onChange={setSelectedCity}
+                popupClassName="dark-select-dropdown"
+                className="custom-lang-select bg-[#0F1419] border-slate-800 text-slate-200 rounded-xl text-xs w-44"
+                options={[
+                  { value: 'ALL', label: `🕌 ${t('common.all_cities')}` },
+                  { value: 'Samarqand', label: `🕌 ${t('cities.Samarqand')}` },
+                  { value: 'Buxoro', label: `🏰 ${t('cities.Buxoro')}` },
+                  { value: 'Toshkent', label: `🏙️ ${t('cities.Toshkent')}` },
+                  { value: 'Xiva', label: `🏛️ ${t('cities.Xiva')}` },
+                ]}
+              />
+            </div>
+
+            {/* Date Filter */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <CalendarOutlined className="text-[#C2703D]" /> {t('common.filter_by_date', "Sana bo'yicha filter:")}
+              </span>
+              <DatePicker
+                value={selectedDate}
+                onChange={(date) => setSelectedDate(date)}
+                placeholder={t('common.choose_date', 'Sanani tanlang')}
+                format="DD.MM.YYYY"
+                allowClear
+                popupClassName="dark-calendar-dropdown"
+                className="custom-date-picker bg-[#0F1419] border-slate-800 text-slate-200 rounded-xl text-xs w-40 h-8"
+                cellRender={(current, info) => {
+                  if (info.type !== 'date') return info.originNode;
+                  const dateStr = dayjs(current).format('YYYY-MM-DD');
+                  const hasTour = availableTourDates.has(dateStr);
+                  return (
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      {info.originNode}
+                      {hasTour && (
+                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#C2703D] pointer-events-none" />
+                      )}
+                    </div>
+                  );
+                }}
+              />
+            </div>
           </div>
 
+          {/* Sort */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
               {t('common.sort_by')}
@@ -130,6 +190,26 @@ export const TouristExperiencesList: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* Active Date Filter Notice */}
+        {selectedDate && (
+          <div className="flex items-center justify-between bg-[#161F28] border border-[#C2703D]/40 px-4 py-2.5 rounded-2xl text-xs shadow-sm">
+            <span className="text-slate-300 flex items-center gap-2 flex-wrap">
+              <CalendarOutlined className="text-[#C2703D]" />
+              {t('catalog.filter_active', "Tanlangan sana bo'yicha turlar:")}{' '}
+              <strong className="text-amber-400 font-semibold">{selectedDate.format('DD.MM.YYYY')}</strong>
+              <span className="text-slate-500">({filteredExperiences.length} ta ekskursiya)</span>
+            </span>
+            <Button
+              size="small"
+              type="text"
+              onClick={() => setSelectedDate(null)}
+              className="text-slate-400 hover:text-white text-xs font-semibold h-auto p-0"
+            >
+              ✕ {t('common.clear_filter', 'Filtrni tozalash')}
+            </Button>
+          </div>
+        )}
 
         {/* Loading State */}
         {isLoading && (
@@ -172,24 +252,41 @@ export const TouristExperiencesList: React.FC = () => {
         )}
 
         {/* Empty State */}
-        {!isLoading && !isError && experiences.length === 0 && (
+        {!isLoading && !isError && filteredExperiences.length === 0 && (
           <div className="bg-[#161F28] border border-slate-800 rounded-3xl p-12 text-center">
             <Empty
               description={
                 <div className="space-y-1">
-                  <span className="text-slate-300 font-bold text-base block">{t('catalog.no_tours_found')}</span>
-                  <span className="text-slate-400 text-xs">{t('catalog.no_tours_subtitle')}</span>
+                  <span className="text-slate-300 font-bold text-base block">
+                    {selectedDate
+                      ? t('catalog.no_tours_for_date', 'Ushbu sanada mavjud ekskursiyalar topilmadi')
+                      : t('catalog.no_tours_found')}
+                  </span>
+                  <span className="text-slate-400 text-xs">
+                    {selectedDate
+                      ? t('catalog.try_another_date', "Boshqa sanani tanlab ko'ring yoki filtrni tozalang")
+                      : t('catalog.no_tours_subtitle')}
+                  </span>
                 </div>
               }
               className="py-6"
-            />
+            >
+              {selectedDate && (
+                <Button
+                  onClick={() => setSelectedDate(null)}
+                  className="mt-2 bg-[#C2703D] hover:bg-[#A85B2D] text-white border-none rounded-xl text-xs font-semibold px-4"
+                >
+                  {t('catalog.show_all_dates', "Barcha sanalarni ko'rsatish")}
+                </Button>
+              )}
+            </Empty>
           </div>
         )}
 
         {/* Experiences Cards Grid (Mobile-First 1-col, Tablet 2-col, Desktop 3-col) */}
-        {!isLoading && !isError && experiences.length > 0 && (
+        {!isLoading && !isError && filteredExperiences.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {experiences.map((exp) => {
+            {filteredExperiences.map((exp) => {
               const displayPrice = exp.priceUsd || exp.price;
               const uzsEstimate = Math.round((exp.priceUzs || (displayPrice * USD_TO_UZS_RATE)));
               const title = getExpTitle(exp, i18n.language);
