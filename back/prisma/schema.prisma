@@ -49,10 +49,27 @@ model User {
   updatedAt              DateTime @updatedAt
 
   // Relations
-  experiences Experience[] @relation("GuideExperiences")
-  bookings    Booking[]
+  experiences    Experience[]   @relation("GuideExperiences")
+  bookings       Booking[]
+  refreshTokens  RefreshToken[]
 
   @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique   // SHA-256 hash of the raw refresh token
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?           // null = active, set = revoked
+  createdAt DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
 }
 
 model Experience {

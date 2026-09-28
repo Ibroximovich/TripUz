@@ -18,9 +18,20 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
 }
 
 /**
- * Refresh access token using refresh token
+ * Refresh access token using refresh token (token rotation)
  */
-export async function refreshToken(data: RefreshTokenDto): Promise<ApiResponse<{ accessToken: string; refreshToken: string }>> {
+export async function refreshTokenApi(data: RefreshTokenDto): Promise<ApiResponse<{ accessToken: string; refreshToken: string }>> {
   const response = await api.post<ApiResponse<{ accessToken: string; refreshToken: string }>>('/auth/refresh', data);
   return response.data;
+}
+
+/**
+ * Logout: revoke refresh token on the server, then clear local state
+ */
+export async function logoutApi(refreshToken: string): Promise<void> {
+  try {
+    await api.post('/auth/logout', { refreshToken });
+  } catch {
+    // Ignore server errors on logout — local state will be cleared anyway
+  }
 }

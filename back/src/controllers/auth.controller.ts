@@ -26,6 +26,51 @@ export async function googleLogin(req: Request, res: Response, next: NextFunctio
 }
 
 /**
+ * POST /api/auth/refresh
+ * Accepts a refresh token, validates it against the DB, returns a new token pair (rotation).
+ */
+export async function refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { refreshToken: rawRefreshToken } = req.body;
+
+    if (!rawRefreshToken || typeof rawRefreshToken !== 'string') {
+      res.status(400).json({ success: false, message: 'refreshToken is required' });
+      return;
+    }
+
+    const tokens = await authService.refreshTokens(rawRefreshToken);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/auth/logout
+ * Revokes the refresh token server-side.
+ */
+export async function logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { refreshToken: rawRefreshToken } = req.body;
+
+    if (rawRefreshToken && typeof rawRefreshToken === 'string') {
+      await authService.revokeRefreshToken(rawRefreshToken);
+    }
+
+    res.status(200).json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
  * GET /api/auth/me
  * Returns the authenticated user's profile.
  */

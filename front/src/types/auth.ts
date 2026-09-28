@@ -51,6 +51,8 @@ export interface AuthState {
   // Actions
   setSelectedRole: (role: UserRole) => void;
   setAuth: (user: User, tokens: AuthTokens) => void;
+  /** Update only access + refresh tokens after silent refresh */
+  setTokens: (accessToken: string, refreshToken: string) => void;
   updateUser: (user: User) => void;
   logout: () => void;
 }

@@ -1,16 +1,28 @@
 import { Router } from 'express';
-import { googleLogin, getMe } from '../controllers/auth.controller';
+import { googleLogin, getMe, refreshToken, logout } from '../controllers/auth.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
-import { googleAuthSchema } from '../schemas/auth.schema';
+import { googleAuthSchema, refreshTokenSchema } from '../schemas/auth.schema';
 
 const router = Router();
 
 /**
  * POST /api/auth/google
- * Verify Google ID token and return JWT
+ * Verify Google ID token and return JWT pair
  */
 router.post('/google', validate(googleAuthSchema), googleLogin);
+
+/**
+ * POST /api/auth/refresh
+ * Rotate refresh token — returns new access + refresh token pair
+ */
+router.post('/refresh', validate(refreshTokenSchema), refreshToken);
+
+/**
+ * POST /api/auth/logout
+ * Revoke refresh token server-side (refreshToken in body, optional)
+ */
+router.post('/logout', logout);
 
 /**
  * GET /api/auth/me

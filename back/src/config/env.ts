@@ -8,8 +8,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   DATABASE_URL: z.string({ required_error: 'DATABASE_URL is required' }),
   JWT_SECRET: z.string({ required_error: 'JWT_SECRET is required' }).min(32, 'JWT_SECRET must be at least 32 characters'),
+  JWT_REFRESH_SECRET: z.string().optional(), // Falls back to JWT_SECRET if not set
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
-  JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
+  JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
   GOOGLE_CLIENT_ID: z.string({ required_error: 'GOOGLE_CLIENT_ID is required' }),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   COMMISSION_RATE: z.string().default('0.10'),
@@ -31,6 +32,8 @@ export const env = {
   nodeEnv: parsed.data.NODE_ENV,
   databaseUrl: parsed.data.DATABASE_URL,
   jwtSecret: parsed.data.JWT_SECRET,
+  // Refresh token uses its own secret for defense-in-depth; falls back to JWT_SECRET
+  jwtRefreshSecret: parsed.data.JWT_REFRESH_SECRET || parsed.data.JWT_SECRET,
   jwtAccessExpiresIn: parsed.data.JWT_ACCESS_EXPIRES_IN,
   jwtRefreshExpiresIn: parsed.data.JWT_REFRESH_EXPIRES_IN,
   googleClientId: parsed.data.GOOGLE_CLIENT_ID,
