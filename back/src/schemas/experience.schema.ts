@@ -61,7 +61,10 @@ export const updateGuideExperienceSchema = createGuideExperienceSchema.partial()
  * Schema for Guide POST /api/guide/experiences/:id/dates (add available date/slot)
  */
 export const addAvailableDateSchema = z.object({
-  date: z.coerce.date({ required_error: 'Sana kiritilishi shart' }),
+  date: z.coerce.date({ required_error: 'Sana kiritilishi shart' }).refine(
+    (d) => d.getTime() > Date.now() - 5 * 60 * 1000,
+    { message: "O'tib ketgan sanani biriktirib bo'lmaydi! Kelgusi sanani tanlang." }
+  ),
   slots: z.coerce.number().int().positive().optional().default(10),
   maxCapacity: z.coerce.number().int().positive().optional().default(10),
 });

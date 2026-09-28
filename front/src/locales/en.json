@@ -327,6 +327,7 @@
     "delete_success": "Experience deleted successfully 🗑️",
     "delete_error": "Error deleting experience",
     "slot_added": "Available date added successfully! 📅",
+    "past_date_error": "Cannot attach a past date! Please select a future date.",
     "slot_deleted": "Date removed",
     "slot_delete_error": "Error removing date",
     "slot_add_error": "Error adding date",

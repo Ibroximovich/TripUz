@@ -327,6 +327,7 @@
     "delete_success": "Ekskursiya muvaffaqiyatli o'chirildi 🗑️",
     "delete_error": "O'chirishda xatolik yuz berdi",
     "slot_added": "Bo'sh sana muvaffaqiyatli biriktirildi! 📅",
+    "past_date_error": "O'tib ketgan sanani biriktirib bo'lmaydi! Kelgusi sanani tanlang.",
     "slot_deleted": "Sana o'chirildi",
     "slot_delete_error": "O'chirishda xatolik",
     "slot_add_error": "Sana qo'shishda xatolik",

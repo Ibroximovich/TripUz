@@ -610,10 +610,18 @@ export const GuideDashboard: React.FC = () => {
    * Handle Add Available Slot
    */
   const handleAddSlot = async (values: any) => {
+    const dateStr = values.date ? values.date.format('YYYY-MM-DD') : '';
+    const timeStr = values.time ? values.time.format('HH:mm') : '10:00';
+
+    // O'tib ketgan sanani tekshirish — agar o'tib ketgan bo'lsa xabar berib, saqlamaydi
+    const selectedDateTime = dayjs(`${dateStr} ${timeStr}`, 'YYYY-MM-DD HH:mm');
+    if (selectedDateTime.isBefore(dayjs())) {
+      message.error(t('guide.past_date_error', "O'tib ketgan sanani biriktirib bo'lmaydi! Kelgusi sanani tanlang."));
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const dateStr = values.date.format('YYYY-MM-DD');
-      const timeStr = values.time ? values.time.format('HH:mm') : '10:00';
       const fullDate = `${dateStr}T${timeStr}:00.000Z`;
 
       const maxCap = Number(values.maxCapacity || values.slots || 10);
@@ -629,9 +637,11 @@ export const GuideDashboard: React.FC = () => {
         setIsSlotModalOpen(false);
         slotForm.resetFields();
         fetchData();
+      } else {
+        message.error(res.message || t('guide.slot_add_error'));
       }
     } catch (err: any) {
-      message.error(err.message || t('guide.slot_add_error'));
+      message.error(err.response?.data?.message || err.message || t('guide.slot_add_error'));
     } finally {
       setSubmitting(false);
     }
