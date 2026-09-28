@@ -10,8 +10,10 @@ import {
   Skeleton,
   Alert,
   Drawer,
+  Calendar,
   message,
 } from 'antd';
+import type { Dayjs } from 'dayjs';
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
@@ -40,6 +42,7 @@ export const TouristMyBookings: React.FC = () => {
 
   const [selectedBookingForSheet, setSelectedBookingForSheet] = useState<Booking | null>(null);
   const [isBookingSheetOpen, setIsBookingSheetOpen] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 
   // Set page title
   useEffect(() => {
@@ -203,89 +206,167 @@ export const TouristMyBookings: React.FC = () => {
           </div>
         )}
 
+        {/* Calendar Filter */}
+        {!isLoading && !isError && bookings.length > 0 && (() => {
+          // Collect unique booking dates for dot markers
+          const bookingDates = new Set(
+            bookings.map((b) => dayjs(b.availableDate?.date || b.createdAt).format('YYYY-MM-DD'))
+          );
+          return (
+            <div className="bg-[#161F28] border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+              <div className="flex items-center justify-between px-5 pt-4 pb-2">
+                <span className="text-sm font-bold text-white flex items-center gap-2">
+                  <CalendarOutlined className="text-amber-400" />
+                  {t('booking.filter_by_date', 'Sana bo\'yicha filtrlash')}
+                </span>
+                {selectedDate && (
+                  <Button
+                    size="small"
+                    onClick={() => setSelectedDate(null)}
+                    className="border-slate-700 text-slate-300 rounded-xl text-xs"
+                  >
+                    {t('common.reset', 'Tozalash')}
+                  </Button>
+                )}
+              </div>
+              <Calendar
+                fullscreen={false}
+                value={selectedDate || dayjs()}
+                onSelect={(date) => {
+                  const dateStr = date.format('YYYY-MM-DD');
+                  if (selectedDate && selectedDate.format('YYYY-MM-DD') === dateStr) {
+                    setSelectedDate(null); // same date clicked → deselect
+                  } else {
+                    setSelectedDate(date);
+                  }
+                }}
+                cellRender={(date) => {
+                  const ds = date.format('YYYY-MM-DD');
+                  if (bookingDates.has(ds)) {
+                    return (
+                      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 2 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C2703D', display: 'inline-block' }} />
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+                style={{ background: 'transparent' }}
+              />
+              {selectedDate && (
+                <div className="px-5 pb-3 text-xs text-amber-300 font-bold">
+                  📅 {selectedDate.format('DD.MM.YYYY')} — {t('booking.filtered_results', 'filtrlangan natijalar')}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Bookings Feed */}
-        {!isLoading && !isError && bookings.length > 0 && (
-          <div className="space-y-4">
-            {bookings.map((booking) => {
-              const exp = booking.experience;
-              const dateVal = booking.availableDate?.date || booking.createdAt;
-              const numP = booking.numPeople || booking.participantsCount || 1;
-              const isPaid = booking.paymentStatus === 'PAID';
+        {!isLoading && !isError && bookings.length > 0 && (() => {
+          const filtered = selectedDate
+            ? bookings.filter((b) =>
+                dayjs(b.availableDate?.date || b.createdAt).format('YYYY-MM-DD') ===
+                selectedDate.format('YYYY-MM-DD')
+              )
+            : bookings;
+          return (
+            <div className="space-y-4">
+              {/* No results for selected date */}
+              {filtered.length === 0 && selectedDate && (
+                <div className="bg-[#161F28] border border-slate-800 rounded-3xl p-8 text-center">
+                  <Empty
+                    description={
+                      <span className="text-slate-400 text-xs">
+                        {t('booking.no_bookings_for_date', 'Bu sanada buyurtma topilmadi')}
+                      </span>
+                    }
+                  />
+                  <Button
+                    size="small"
+                    onClick={() => setSelectedDate(null)}
+                    className="mt-3 border-slate-700 text-slate-300 rounded-xl text-xs"
+                  >
+                    {t('common.reset', 'Tozalash')}
+                  </Button>
+                </div>
+              )}
+              {filtered.map((booking) => {
+                const exp = booking.experience;
+                const dateVal = booking.availableDate?.date || booking.createdAt;
+                const numP = booking.numPeople || booking.participantsCount || 1;
+                const isPaid = booking.paymentStatus === 'PAID';
 
-              return (
-                <div
-                  key={booking.id}
-                  onClick={() => {
-                    setSelectedBookingForSheet(booking);
-                    setIsBookingSheetOpen(true);
-                  }}
-                  className="bg-[#161F28] border border-slate-800 rounded-3xl overflow-hidden hover:border-[#C2703D]/50 transition-all shadow-xl p-4 sm:p-6 cursor-pointer active:scale-[0.99] group"
-                >
-                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                    
-                    {/* Thumbnail & Info */}
-                    <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
-                      <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-800 bg-[#0F1419]">
-                        <img
-                          src={(exp?.images && exp.images[0]) || 'https://images.unsplash.com/photo-1590076215667-873d96c8913c?auto=format&fit=crop&w=400&q=80'}
-                          alt={exp?.title || 'Tour'}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5 flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Tag className="font-bold border-none bg-[#0F1419] text-amber-300 px-2.5 py-0.5 rounded-lg text-xs">
-                            🕌 {t(`cities.${exp?.location || exp?.city || 'Samarqand'}`, exp?.location || exp?.city || 'Samarqand')}
-                          </Tag>
-                          {getStatusBadge(booking.status)}
+                return (
+                  <div
+                    key={booking.id}
+                    onClick={() => {
+                      setSelectedBookingForSheet(booking);
+                      setIsBookingSheetOpen(true);
+                    }}
+                    className="bg-[#161F28] border border-slate-800 rounded-3xl overflow-hidden hover:border-[#C2703D]/50 transition-all shadow-xl p-4 sm:p-6 cursor-pointer active:scale-[0.99] group"
+                  >
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                      {/* Thumbnail & Info */}
+                      <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-800 bg-[#0F1419]">
+                          <img
+                            src={(exp?.images && exp.images[0]) || 'https://images.unsplash.com/photo-1590076215667-873d96c8913c?auto=format&fit=crop&w=400&q=80'}
+                            alt={exp?.title || 'Tour'}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
                         </div>
-
-                        <h3 className="text-sm sm:text-lg font-serif font-bold text-white leading-snug truncate m-0">
-                          {getExpTitle(exp as any, i18n.language) || 'Local Experience'}
-                        </h3>
-
-                        <div className="text-xs text-slate-300 space-y-1 pt-0.5">
-                          <div className="flex items-center gap-1.5 text-amber-400">
-                            <CalendarOutlined />
-                            <span>📅 {dayjs(dateVal).format('DD.MM.YYYY HH:mm')}</span>
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Tag className="font-bold border-none bg-[#0F1419] text-amber-300 px-2.5 py-0.5 rounded-lg text-xs">
+                              🕌 {t(`cities.${exp?.location || exp?.city || 'Samarqand'}`, exp?.location || exp?.city || 'Samarqand')}
+                            </Tag>
+                            {getStatusBadge(booking.status)}
                           </div>
-
-                          <div className="flex items-center gap-1.5 text-slate-300">
-                            <TeamOutlined className="text-[#C2703D]" />
-                            <span>👥 {numP} {t('common.person')}</span>
+                          <h3 className="text-sm sm:text-lg font-serif font-bold text-white leading-snug truncate m-0">
+                            {getExpTitle(exp as any, i18n.language) || 'Local Experience'}
+                          </h3>
+                          <div className="text-xs text-slate-300 space-y-1 pt-0.5">
+                            <div className="flex items-center gap-1.5 text-amber-400">
+                              <CalendarOutlined />
+                              <span>📅 {dayjs(dateVal).format('DD.MM.YYYY HH:mm')}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-slate-300">
+                              <TeamOutlined className="text-[#C2703D]" />
+                              <span>👥 {numP} {t('common.person')}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Voucher & Price Tag */}
-                    <div className="w-full sm:w-auto text-left sm:text-right border-t sm:border-t-0 border-slate-800/80 pt-3 sm:pt-0 flex items-center sm:flex-col justify-between sm:justify-start gap-2 flex-shrink-0">
-                      <div>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase block sm:inline">{t('common.total')} </span>
-                        <span className="text-lg sm:text-2xl font-serif font-black text-amber-400 block sm:inline">
-                          ${Number(booking.totalPrice).toFixed(2)} USD
-                        </span>
-                        <span className={`text-[10px] sm:text-xs block font-bold mt-0.5 ${isPaid ? 'text-emerald-400' : 'text-amber-300'}`}>
-                          {isPaid ? t('booking.payment_paid') : t('booking.payment_pending_short')}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="bg-[#0F1419] px-3 py-1 rounded-xl border border-slate-800 font-mono text-xs">
-                          <span className="text-amber-400 font-black tracking-wider flex items-center gap-1">
-                            <BarcodeOutlined /> {booking.voucherCode}
+                      {/* Voucher & Price Tag */}
+                      <div className="w-full sm:w-auto text-left sm:text-right border-t sm:border-t-0 border-slate-800/80 pt-3 sm:pt-0 flex items-center sm:flex-col justify-between sm:justify-start gap-2 flex-shrink-0">
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block sm:inline">{t('common.total')} </span>
+                          <span className="text-lg sm:text-2xl font-serif font-black text-amber-400 block sm:inline">
+                            ${Number(booking.totalPrice).toFixed(2)} USD
+                          </span>
+                          <span className={`text-[10px] sm:text-xs block font-bold mt-0.5 ${isPaid ? 'text-emerald-400' : 'text-amber-300'}`}>
+                            {isPaid ? t('booking.payment_paid') : t('booking.payment_pending_short')}
                           </span>
                         </div>
-                      </div>
-                    </div>
 
+                        <div className="flex items-center gap-2">
+                          <div className="bg-[#0F1419] px-3 py-1 rounded-xl border border-slate-800 font-mono text-xs">
+                            <span className="text-amber-400 font-black tracking-wider flex items-center gap-1">
+                              <BarcodeOutlined /> {booking.voucherCode}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          );
+        })()}
 
       </main>
 
