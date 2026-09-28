@@ -653,6 +653,21 @@ export const GuideDashboard: React.FC = () => {
   };
 
   /**
+   * Returns allowed next statuses based on backend transition rules:
+   * - PENDING  → CONFIRMED | CANCELLED
+   * - CONFIRMED → COMPLETED | CANCELLED
+   * - COMPLETED → [] (terminal)
+   * - CANCELLED → [] (terminal)
+   */
+  const getAllowedStatuses = (current: string): string[] => {
+    switch (current) {
+      case 'PENDING':    return ['CONFIRMED', 'CANCELLED'];
+      case 'CONFIRMED':  return ['COMPLETED', 'CANCELLED'];
+      default:           return []; // COMPLETED & CANCELLED are terminal
+    }
+  };
+
+  /**
    * Handle Update Booking Status
    */
   const handleUpdateBookingStatus = async (bookingId: string, status: string) => {
@@ -663,7 +678,9 @@ export const GuideDashboard: React.FC = () => {
         fetchData();
       }
     } catch (err: any) {
-      message.error(err.message || t('guide.booking_status_error'));
+      // Prefer server's localized message over generic fallback
+      const serverMsg = err?.response?.data?.message;
+      message.error(serverMsg || t('guide.booking_status_error'));
     }
   };
 
@@ -1749,18 +1766,36 @@ export const GuideDashboard: React.FC = () => {
 
                                   <div className="flex items-center gap-2 mt-1">
                                     <span className="text-xs text-slate-400 font-semibold">{t('common.status')}:</span>
-                                    <Select
-                                      value={b.status}
-                                      onChange={(status) => handleUpdateBookingStatus(b.id, status)}
-                                      popupClassName="dark-select-dropdown"
-                                      className="custom-lang-select bg-[#161F28] border-slate-700 rounded-lg text-xs w-36"
-                                      options={[
-                                        { value: 'PENDING', label: t('booking.status_pending') },
-                                        { value: 'CONFIRMED', label: t('booking.status_confirmed') },
-                                        { value: 'COMPLETED', label: t('booking.status_completed') },
-                                        { value: 'CANCELLED', label: t('booking.status_cancelled') },
-                                      ]}
-                                    />
+                                    <Tooltip
+                                      title={getAllowedStatuses(b.status).length === 0 ? t('guide.booking_status_terminal') : undefined}
+                                    >
+                                      <Select
+                                        value={b.status}
+                                        onChange={(status) => handleUpdateBookingStatus(b.id, status)}
+                                        disabled={getAllowedStatuses(b.status).length === 0}
+                                        popupClassName="dark-select-dropdown"
+                                        className="custom-lang-select bg-[#161F28] border-slate-700 rounded-lg text-xs w-36"
+                                        options={[
+                                          { value: b.status, label: (() => {
+                                            const labels: Record<string, string> = {
+                                              PENDING: t('booking.status_pending'),
+                                              CONFIRMED: t('booking.status_confirmed'),
+                                              COMPLETED: t('booking.status_completed'),
+                                              CANCELLED: t('booking.status_cancelled'),
+                                            };
+                                            return labels[b.status] ?? b.status;
+                                          })(), disabled: true },
+                                          ...getAllowedStatuses(b.status).map((s) => ({
+                                            value: s,
+                                            label: {
+                                              CONFIRMED: t('booking.status_confirmed'),
+                                              COMPLETED: t('booking.status_completed'),
+                                              CANCELLED: t('booking.status_cancelled'),
+                                            }[s] ?? s,
+                                          })),
+                                        ]}
+                                      />
+                                    </Tooltip>
                                   </div>
                                 </div>
                               </div>
@@ -2604,22 +2639,40 @@ export const GuideDashboard: React.FC = () => {
 
             {/* Status Selector in Bottom Sheet */}
             <div className="space-y-1.5 pt-1">
-              <label className="text-xs text-slate-400 font-bold uppercase tracking-wider block">Holatni O'zgartirish:</label>
-              <Select
-                value={selectedBookingForSheet.status}
-                onChange={(status) => {
-                  handleUpdateBookingStatus(selectedBookingForSheet.id, status);
-                  setSelectedBookingForSheet((prev) => (prev ? { ...prev, status } : null));
-                }}
-                popupClassName="dark-select-dropdown"
-                className="custom-lang-select bg-[#161F28] border-slate-700 rounded-xl text-xs w-full h-10"
-                options={[
-                  { value: 'PENDING', label: t('booking.status_pending') },
-                  { value: 'CONFIRMED', label: t('booking.status_confirmed') },
-                  { value: 'COMPLETED', label: t('booking.status_completed') },
-                  { value: 'CANCELLED', label: t('booking.status_cancelled') },
-                ]}
-              />
+              <label className="text-xs text-slate-400 font-bold uppercase tracking-wider block">{t('common.status')}:</label>
+              <Tooltip
+                title={getAllowedStatuses(selectedBookingForSheet.status).length === 0 ? t('guide.booking_status_terminal') : undefined}
+              >
+                <Select
+                  value={selectedBookingForSheet.status}
+                  onChange={(status) => {
+                    handleUpdateBookingStatus(selectedBookingForSheet.id, status);
+                    setSelectedBookingForSheet((prev) => (prev ? { ...prev, status } : null));
+                  }}
+                  disabled={getAllowedStatuses(selectedBookingForSheet.status).length === 0}
+                  popupClassName="dark-select-dropdown"
+                  className="custom-lang-select bg-[#161F28] border-slate-700 rounded-xl text-xs w-full h-10"
+                  options={[
+                    { value: selectedBookingForSheet.status, label: (() => {
+                      const labels: Record<string, string> = {
+                        PENDING: t('booking.status_pending'),
+                        CONFIRMED: t('booking.status_confirmed'),
+                        COMPLETED: t('booking.status_completed'),
+                        CANCELLED: t('booking.status_cancelled'),
+                      };
+                      return labels[selectedBookingForSheet.status] ?? selectedBookingForSheet.status;
+                    })(), disabled: true },
+                    ...getAllowedStatuses(selectedBookingForSheet.status).map((s) => ({
+                      value: s,
+                      label: {
+                        CONFIRMED: t('booking.status_confirmed'),
+                        COMPLETED: t('booking.status_completed'),
+                        CANCELLED: t('booking.status_cancelled'),
+                      }[s] ?? s,
+                    })),
+                  ]}
+                />
+              </Tooltip>
             </div>
           </div>
         )}

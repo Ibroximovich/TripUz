@@ -332,6 +332,7 @@
     "slot_add_error": "Error adding date",
     "booking_status_updated": "Booking status updated to \"{{status}}\"",
     "booking_status_error": "Error updating booking status",
+    "booking_status_terminal": "Final status — cannot be changed",
     "profile_saved": "Profile information saved successfully! 🎉",
     "profile_error": "Error updating profile"
   },

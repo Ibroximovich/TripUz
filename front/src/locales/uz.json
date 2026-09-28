@@ -332,6 +332,7 @@
     "slot_add_error": "Sana qo'shishda xatolik",
     "booking_status_updated": "Buyurtma holati \"{{status}}\" ga o'zgartirildi",
     "booking_status_error": "Buyurtma holatini o'zgartirishda xatolik",
+    "booking_status_terminal": "Yakuniy holat — o'zgartirib bo'lmaydi",
     "profile_saved": "Profil ma'lumotlaringiz muvaffaqiyatli saqlandi! 🎉",
     "profile_error": "Profilni yangilashda xatolik"
   },
