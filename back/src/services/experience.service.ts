@@ -146,7 +146,7 @@ export async function getExperienceById(id: string, lang: SupportedLanguage = 'u
     where: { id },
     include: {
       guide: {
-        select: { id: true, name: true, avatar: true, email: true },
+        select: { id: true, name: true, avatar: true, email: true, phone: true, telegramHandle: true },
       },
       availableDates: {
         where: {

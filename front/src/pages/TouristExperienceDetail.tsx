@@ -18,6 +18,8 @@ import {
   TeamOutlined,
   LinkOutlined,
   CalendarOutlined,
+  PhoneOutlined,
+  SendOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { TouristHeader } from '../components/TouristHeader';
@@ -247,19 +249,49 @@ export const TouristExperienceDetail: React.FC = () => {
               </div>
 
               {/* Guide Information */}
-              {(experience as any).guide && (
-                <div className="bg-[#161F28] border border-slate-800 rounded-3xl p-6 flex items-center gap-4">
-                  <Avatar
-                    size={56}
-                    src={(experience as any).guide.avatarUrl || (experience as any).guide.avatar}
-                    icon={<UserOutlined />}
-                    className="bg-[#C2703D] border-2 border-amber-400 flex-shrink-0"
-                  />
-                  <div>
-                    <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{t('experience.certified_guide')}</div>
-                    <div className="text-lg font-serif font-bold text-white">{(experience as any).guide.name}</div>
-                    <div className="text-xs text-slate-400">{(experience as any).guide.email}</div>
+              {experience.guide && (
+                <div className="bg-[#161F28] border border-slate-800 rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar
+                      size={56}
+                      src={experience.guide.avatarUrl || experience.guide.avatar}
+                      icon={<UserOutlined />}
+                      className="bg-[#C2703D] border-2 border-amber-400 flex-shrink-0"
+                    />
+                    <div>
+                      <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{t('experience.certified_guide')}</div>
+                      <div className="text-lg font-serif font-bold text-white">{experience.guide.name}</div>
+                      {experience.guide.email && (
+                        <div className="text-xs text-slate-400">{experience.guide.email}</div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Guide Contact Details: Phone & Telegram */}
+                  {(experience.guide.phone || experience.guide.telegramHandle) && (
+                    <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l border-slate-800 sm:pl-4">
+                      {experience.guide.phone && (
+                        <a
+                          href={`tel:${experience.guide.phone}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0F1419] border border-slate-800 hover:border-amber-400/50 text-amber-400 hover:text-amber-300 text-xs font-semibold transition-colors"
+                        >
+                          <PhoneOutlined />
+                          <span>{experience.guide.phone}</span>
+                        </a>
+                      )}
+                      {experience.guide.telegramHandle && (
+                        <a
+                          href={`https://t.me/${experience.guide.telegramHandle.replace('@', '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0F1419] border border-slate-800 hover:border-[#0EA5E9]/50 text-[#0EA5E9] hover:text-cyan-300 text-xs font-semibold transition-colors"
+                        >
+                          <SendOutlined />
+                          <span>{experience.guide.telegramHandle}</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

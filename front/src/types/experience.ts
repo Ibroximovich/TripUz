@@ -43,6 +43,15 @@ export interface Experience {
     availableDates: number;
   };
   availableDates?: AvailableDate[];
+  guide?: {
+    id: string;
+    name: string;
+    email?: string;
+    avatar?: string;
+    avatarUrl?: string;
+    phone?: string;
+    telegramHandle?: string;
+  };
 }
 
 export function getExpTitle(exp: Partial<Experience> | undefined | null, lang: string = 'uz'): string {
