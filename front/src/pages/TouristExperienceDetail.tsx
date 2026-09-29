@@ -287,7 +287,7 @@ export const TouristExperienceDetail: React.FC = () => {
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0F1419] border border-slate-800 hover:border-[#0EA5E9]/50 text-[#0EA5E9] hover:text-cyan-300 text-xs font-semibold transition-colors"
                         >
                           <SendOutlined />
-                          <span>{experience.guide.telegramHandle}</span>
+                          <span>Telegram</span>
                         </a>
                       )}
                     </div>
