@@ -128,17 +128,35 @@ export async function getGuideExperiences(guideId: string) {
 export async function createGuideExperience(guideId: string, dto: CreateGuideExperienceDto) {
   await ensureGuideUserExists(guideId);
 
-  // Guard: profile must have avatar, phone, and telegramHandle before publishing a tour
+  // Guard: profile must have a custom avatar, phone, and telegramHandle before publishing a tour
   try {
     const guideUser = await prisma.user.findUnique({
       where: { id: guideId },
-      select: { avatar: true, phone: true, telegramHandle: true },
+      select: { avatar: true, isCustomAvatarUploaded: true, phone: true, telegramHandle: true },
     });
     if (guideUser) {
+      // Avatar is valid only if explicitly marked as custom-uploaded,
+      // OR the URL does not belong to known auto-generated avatar services (Google, Gravatar, etc.)
+      const autoAvatarPatterns = [
+        'googleusercontent.com',
+        'google.com',
+        'gravatar.com',
+        'ui-avatars.com',
+        'avatars.dicebear.com',
+        'placeholder',
+        'default-avatar',
+      ];
+      const avatarUrl = guideUser.avatar?.trim() ?? '';
+      const isAutoAvatar = autoAvatarPatterns.some((p) => avatarUrl.toLowerCase().includes(p));
+      const hasCustomAvatar =
+        guideUser.isCustomAvatarUploaded === true ||
+        (avatarUrl.length > 0 && !isAutoAvatar);
+
       const missingFields: string[] = [];
-      if (!guideUser.avatar?.trim()) missingFields.push('avatar');
+      if (!hasCustomAvatar) missingFields.push('avatar');
       if (!guideUser.phone?.trim()) missingFields.push('phone');
       if (!(guideUser as any).telegramHandle?.trim()) missingFields.push('telegramHandle');
+
       if (missingFields.length > 0) {
         throw new HttpError(
           403,

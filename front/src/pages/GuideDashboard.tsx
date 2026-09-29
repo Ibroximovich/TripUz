@@ -382,10 +382,11 @@ export const GuideDashboard: React.FC = () => {
         setFileList([]);
       }
     } else {
-      // New tour: check profile completeness before opening the form
-      const hasAvatar = Boolean(
-        uploadedAvatarUrl || profile?.avatar || profile?.isCustomAvatarUploaded ||
-        user?.avatar || user?.isCustomAvatarUploaded
+      // New tour: check profile completeness before opening the form.
+      // isRealAvatar() rejects Google/placeholder avatars — only custom-uploaded photos pass.
+      const hasAvatar = isRealAvatar(
+        uploadedAvatarUrl || profile?.avatar || user?.avatar,
+        Boolean(uploadedAvatarUrl) || Boolean(profile?.isCustomAvatarUploaded) || Boolean(user?.isCustomAvatarUploaded)
       );
       const hasPhone = Boolean((profile?.phone || (user as any)?.phone)?.trim());
       const hasTelegram = Boolean(
