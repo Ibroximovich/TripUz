@@ -127,6 +127,30 @@ export async function getGuideExperiences(guideId: string) {
  */
 export async function createGuideExperience(guideId: string, dto: CreateGuideExperienceDto) {
   await ensureGuideUserExists(guideId);
+
+  // Guard: profile must have avatar, phone, and telegramHandle before publishing a tour
+  try {
+    const guideUser = await prisma.user.findUnique({
+      where: { id: guideId },
+      select: { avatar: true, phone: true, telegramHandle: true },
+    });
+    if (guideUser) {
+      const missingFields: string[] = [];
+      if (!guideUser.avatar?.trim()) missingFields.push('avatar');
+      if (!guideUser.phone?.trim()) missingFields.push('phone');
+      if (!(guideUser as any).telegramHandle?.trim()) missingFields.push('telegramHandle');
+      if (missingFields.length > 0) {
+        throw new HttpError(
+          403,
+          'Profile incomplete: please add avatar, phone number, and Telegram username before publishing a tour.'
+        );
+      }
+    }
+  } catch (err) {
+    if (err instanceof HttpError) throw err;
+    // If DB is offline (dev/mock mode) skip the guard silently
+  }
+
   const priceUsd = dto.priceUsd || dto.price || 0;
   if (priceUsd <= 0) {
     throw new HttpError(400, "Narx 0 dan katta bo'lishi kerak");

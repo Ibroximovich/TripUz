@@ -343,7 +343,11 @@
     "booking_status_error": "Buyurtma holatini o'zgartirishda xatolik",
     "booking_status_terminal": "Yakuniy holat — o'zgartirib bo'lmaydi",
     "profile_saved": "Profil ma'lumotlaringiz muvaffaqiyatli saqlandi! 🎉",
-    "profile_error": "Profilni yangilashda xatolik"
+    "profile_error": "Profilni yangilashda xatolik",
+    "profileIncompleteTitle": "Profilingiz to'liq emas",
+    "profileIncompleteMessage": "Yangi tur qo'shishdan oldin profilingizga rasm, telefon raqami va Telegram username qo'shishingiz kerak.",
+    "profileIncompleteGoToProfile": "Profilga o'tish",
+    "profileIncompleteClose": "Yopish"
   },
   "footer": {
     "copyright": "© {{year}} TRIPUZ Tourism Marketplace. Barcha huquqlar himoyalangan."

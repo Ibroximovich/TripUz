@@ -343,7 +343,11 @@
     "booking_status_error": "Error updating booking status",
     "booking_status_terminal": "Final status — cannot be changed",
     "profile_saved": "Profile information saved successfully! 🎉",
-    "profile_error": "Error updating profile"
+    "profile_error": "Error updating profile",
+    "profileIncompleteTitle": "Your profile is incomplete",
+    "profileIncompleteMessage": "Please add a photo, phone number, and Telegram username to your profile before adding a new tour.",
+    "profileIncompleteGoToProfile": "Go to profile",
+    "profileIncompleteClose": "Close"
   },
   "footer": {
     "copyright": "© {{year}} TRIPUZ Tourism Marketplace. All rights reserved."

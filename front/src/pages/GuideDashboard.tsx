@@ -220,6 +220,7 @@ export const GuideDashboard: React.FC = () => {
 
   // Modals & Language Tabs state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isProfileIncompleteModalOpen, setIsProfileIncompleteModalOpen] = useState<boolean>(false);
   const [formLangTab, setFormLangTab] = useState<'uz' | 'en' | 'ru'>('uz');
   const [editingExp, setEditingExp] = useState<Experience | null>(null);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState<boolean>(false);
@@ -340,7 +341,8 @@ export const GuideDashboard: React.FC = () => {
   }, [profile, user, activeTabKey]);
 
   /**
-   * Open Modal for Creating or Editing Experience
+   * Open Modal for Creating or Editing Experience.
+   * For new tours: checks profile completeness first (avatar, phone, telegramHandle).
    */
   const handleOpenModal = (exp?: Experience) => {
     setFormLangTab('uz');
@@ -380,6 +382,21 @@ export const GuideDashboard: React.FC = () => {
         setFileList([]);
       }
     } else {
+      // New tour: check profile completeness before opening the form
+      const hasAvatar = Boolean(
+        uploadedAvatarUrl || profile?.avatar || profile?.isCustomAvatarUploaded ||
+        user?.avatar || user?.isCustomAvatarUploaded
+      );
+      const hasPhone = Boolean((profile?.phone || (user as any)?.phone)?.trim());
+      const hasTelegram = Boolean(
+        ((profile as any)?.telegramHandle || (user as any)?.telegramHandle)?.trim()
+      );
+
+      if (!hasAvatar || !hasPhone || !hasTelegram) {
+        setIsProfileIncompleteModalOpen(true);
+        return;
+      }
+
       setEditingExp(null);
       setUploadedAvatarUrl(null);
       setModalPriceUsd(25);
@@ -2053,6 +2070,47 @@ export const GuideDashboard: React.FC = () => {
         </Card>
       </div>
 
+      {/* MODAL 0: PROFIL TO'LIQ EMAS — YANGI TUR QO'SHISH BLOKLANGAN */}
+      <Modal
+        open={isProfileIncompleteModalOpen}
+        onCancel={() => setIsProfileIncompleteModalOpen(false)}
+        footer={null}
+        width={420}
+        centered
+        className="dark-modal"
+        styles={{
+          body: { background: '#0F1419', padding: '24px' },
+          header: { background: '#0F1419' },
+        }}
+        title={
+          <span className="text-white flex items-center gap-2 text-lg font-bold font-serif">
+            <span className="text-amber-400">⚠️</span> {t('guide.profileIncompleteTitle')}
+          </span>
+        }
+      >
+        <p className="text-slate-300 text-sm leading-relaxed mb-6">
+          {t('guide.profileIncompleteMessage')}
+        </p>
+        <div className="flex gap-3">
+          <Button
+            type="primary"
+            className="flex-1 rounded-xl bg-amber-500 border-amber-500 text-black font-bold hover:bg-amber-400"
+            onClick={() => {
+              setIsProfileIncompleteModalOpen(false);
+              setActiveTabKey('profile');
+            }}
+          >
+            {t('guide.profileIncompleteGoToProfile')}
+          </Button>
+          <Button
+            className="flex-1 rounded-xl border-slate-700 text-slate-300"
+            onClick={() => setIsProfileIncompleteModalOpen(false)}
+          >
+            {t('guide.profileIncompleteClose')}
+          </Button>
+        </div>
+      </Modal>
+
       {/* MODAL 1: YANGI / TAHRIRLASH EKSKURSIYA MODALI */}
       <Modal
         title={
@@ -2090,80 +2148,7 @@ export const GuideDashboard: React.FC = () => {
           }}
           className="space-y-4 pt-2"
         >
-          {/* ===== PROFIL RASM YUKLASH (faqat yangi tur qo'shishda va haqiqiy custom avatar yo'q bo'lsa) ===== */}
-          {!editingExp && !isRealAvatar(
-            uploadedAvatarUrl || profile?.avatar || profile?.avatarUrl || user?.avatar,
-            Boolean(uploadedAvatarUrl) || profile?.isCustomAvatarUploaded || user?.isCustomAvatarUploaded
-          ) && (
-            <div className="bg-amber-500/10 border border-amber-500/40 rounded-2xl p-4 space-y-3 mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-amber-400 text-lg">📸</span>
-                <div>
-                  <div className="text-amber-300 text-xs font-bold uppercase tracking-wider">
-                    {t('guide.profile.avatar')} — <span className="text-red-400">*</span> {t('guide.form.avatar_required_hint', 'Tur e\'lon qilishdan oldin profil rasmingizni yuklang')}
-                  </div>
-                  <div className="text-slate-400 text-[11px] mt-0.5">
-                    {t('guide.profile.avatar_hint')}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Avatar
-                  size={48}
-                  src={uploadedAvatarUrl || profile?.avatar || user?.avatar}
-                  icon={<UserOutlined />}
-                  className="bg-[#C2703D] border-2 border-amber-400 flex-shrink-0"
-                />
-                <Upload
-                  customRequest={async (options) => {
-                    const { file, onSuccess, onError } = options;
-                    setUploadingAvatar(true);
-                    try {
-                      const res = await uploadExperienceImages([file as File]);
-                      const urls = res.data?.urls || (res as any).urls;
-                      if (res.success && urls && urls.length > 0) {
-                        const avatarUrl = urls[0];
-                        setUploadedAvatarUrl(avatarUrl);
-                        setProfile((prev) => (prev ? { ...prev, avatar: avatarUrl, avatarUrl: avatarUrl } : ({ avatar: avatarUrl, avatarUrl } as any)));
-                        if (user) updateUser({ ...user, avatar: avatarUrl });
-                        // Save avatar directly to guide profile backend
-                        try {
-                          await updateGuideProfile({ avatar: avatarUrl });
-                        } catch {
-                          // Avatar stored locally even if profile save fails
-                        }
-                        onSuccess?.(res, file);
-                        message.success(t('guide.profile.avatar_uploaded'));
-                      } else {
-                        throw new Error(res.message || t('guide.profile.upload_error'));
-                      }
-                    } catch (err: any) {
-                      onError?.(err);
-                      message.error(t('guide.profile.avatar_upload_failed'));
-                    } finally {
-                      setUploadingAvatar(false);
-                    }
-                  }}
-                  showUploadList={false}
-                  accept="image/jpeg,image/png,image/webp"
-                >
-                  <Button
-                    htmlType="button"
-                    icon={<UploadOutlined />}
-                    loading={uploadingAvatar}
-                    className="bg-[#161F28] border-amber-500/50 text-amber-300 hover:border-amber-400 rounded-xl text-xs font-semibold"
-                  >
-                    {uploadingAvatar ? t('common.loading', 'Yuklanmoqda...') : t('guide.profile.select_new_avatar')}
-                  </Button>
-                </Upload>
-                {(uploadedAvatarUrl) && (
-                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1">
-                    <CheckOutlined /> {t('guide.profile.avatar_uploaded')}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+
 
           {/* Multilingual Tabs Switcher */}
 
