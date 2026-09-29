@@ -32,7 +32,6 @@ import type { Experience } from '../types/experience';
 import { getExpTitle, getExpDescription, formatLanguageName } from '../types/experience';
 
 const USD_TO_UZS_RATE = 12800;
-const COMMISSION_RATE = 1.10; // 10% platform commission added on top of guide price
 
 export const TouristExperiencesList: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -288,8 +287,8 @@ export const TouristExperiencesList: React.FC = () => {
         {!isLoading && !isError && filteredExperiences.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredExperiences.map((exp) => {
-              const displayPrice = Math.round((exp.priceUsd || exp.price || 0) * COMMISSION_RATE * 100) / 100;
-              const uzsEstimate = Math.round(displayPrice * USD_TO_UZS_RATE);
+              const displayPrice = exp.priceUsd || exp.price;
+              const uzsEstimate = Math.round((exp.priceUzs || (displayPrice * USD_TO_UZS_RATE)));
               const title = getExpTitle(exp, i18n.language);
               const desc = getExpDescription(exp, i18n.language);
 

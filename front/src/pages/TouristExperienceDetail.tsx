@@ -28,7 +28,6 @@ import type { Experience, AvailableDate } from '../types/experience';
 import { getExpTitle, getExpDescription, getExpMeetingPoint, formatLanguageName } from '../types/experience';
 
 const USD_TO_UZS_RATE = 12800;
-const COMMISSION_RATE = 1.10; // 10% platform commission added on top of guide price
 
 export const TouristExperienceDetail: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -126,8 +125,8 @@ export const TouristExperienceDetail: React.FC = () => {
     );
   }
 
-  const priceUsd = Math.round((experience.priceUsd || experience.price || 0) * COMMISSION_RATE * 100) / 100;
-  const priceUzs = Math.round(priceUsd * USD_TO_UZS_RATE);
+  const priceUsd = experience.priceUsd || experience.price || 0;
+  const priceUzs = experience.priceUzs || Math.round(priceUsd * USD_TO_UZS_RATE);
   const images = experience.images && experience.images.length > 0
     ? experience.images
     : ['https://images.unsplash.com/photo-1590076215667-873d96c8913c?auto=format&fit=crop&w=800&q=80'];
