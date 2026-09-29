@@ -3,17 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
-  Card,
   Button,
   Tag,
   Empty,
   Skeleton,
   Alert,
   Drawer,
-  Calendar,
   message,
 } from 'antd';
-import type { Dayjs } from 'dayjs';
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
@@ -42,7 +39,6 @@ export const TouristMyBookings: React.FC = () => {
 
   const [selectedBookingForSheet, setSelectedBookingForSheet] = useState<Booking | null>(null);
   const [isBookingSheetOpen, setIsBookingSheetOpen] = useState<boolean>(false);
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 
   // Set page title
   useEffect(() => {
@@ -206,96 +202,14 @@ export const TouristMyBookings: React.FC = () => {
           </div>
         )}
 
-        {/* Calendar Filter */}
-        {!isLoading && !isError && bookings.length > 0 && (() => {
-          // Collect unique booking dates for dot markers
-          const bookingDates = new Set(
-            bookings.map((b) => dayjs(b.availableDate?.date || b.createdAt).format('YYYY-MM-DD'))
-          );
-          return (
-            <div className="bg-[#161F28] border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
-              <div className="flex items-center justify-between px-5 pt-4 pb-2">
-                <span className="text-sm font-bold text-white flex items-center gap-2">
-                  <CalendarOutlined className="text-amber-400" />
-                  {t('booking.filter_by_date', 'Sana bo\'yicha filtrlash')}
-                </span>
-                {selectedDate && (
-                  <Button
-                    size="small"
-                    onClick={() => setSelectedDate(null)}
-                    className="border-slate-700 text-slate-300 rounded-xl text-xs"
-                  >
-                    {t('common.reset', 'Tozalash')}
-                  </Button>
-                )}
-              </div>
-              <Calendar
-                fullscreen={false}
-                value={selectedDate || dayjs()}
-                onSelect={(date) => {
-                  const dateStr = date.format('YYYY-MM-DD');
-                  if (selectedDate && selectedDate.format('YYYY-MM-DD') === dateStr) {
-                    setSelectedDate(null); // same date clicked → deselect
-                  } else {
-                    setSelectedDate(date);
-                  }
-                }}
-                cellRender={(date) => {
-                  const ds = date.format('YYYY-MM-DD');
-                  if (bookingDates.has(ds)) {
-                    return (
-                      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 2 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C2703D', display: 'inline-block' }} />
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-                style={{ background: 'transparent' }}
-              />
-              {selectedDate && (
-                <div className="px-5 pb-3 text-xs text-amber-300 font-bold">
-                  📅 {selectedDate.format('DD.MM.YYYY')} — {t('booking.filtered_results', 'filtrlangan natijalar')}
-                </div>
-              )}
-            </div>
-          );
-        })()}
-
         {/* Bookings Feed */}
-        {!isLoading && !isError && bookings.length > 0 && (() => {
-          const filtered = selectedDate
-            ? bookings.filter((b) =>
-                dayjs(b.availableDate?.date || b.createdAt).format('YYYY-MM-DD') ===
-                selectedDate.format('YYYY-MM-DD')
-              )
-            : bookings;
-          return (
-            <div className="space-y-4">
-              {/* No results for selected date */}
-              {filtered.length === 0 && selectedDate && (
-                <div className="bg-[#161F28] border border-slate-800 rounded-3xl p-8 text-center">
-                  <Empty
-                    description={
-                      <span className="text-slate-400 text-xs">
-                        {t('booking.no_bookings_for_date', 'Bu sanada buyurtma topilmadi')}
-                      </span>
-                    }
-                  />
-                  <Button
-                    size="small"
-                    onClick={() => setSelectedDate(null)}
-                    className="mt-3 border-slate-700 text-slate-300 rounded-xl text-xs"
-                  >
-                    {t('common.reset', 'Tozalash')}
-                  </Button>
-                </div>
-              )}
-              {filtered.map((booking) => {
-                const exp = booking.experience;
-                const dateVal = booking.availableDate?.date || booking.createdAt;
-                const numP = booking.numPeople || booking.participantsCount || 1;
-                const isPaid = booking.paymentStatus === 'PAID';
+        {!isLoading && !isError && bookings.length > 0 && (
+          <div className="space-y-4">
+            {bookings.map((booking) => {
+              const exp = booking.experience;
+              const dateVal = booking.availableDate?.date || booking.createdAt;
+              const numP = booking.numPeople || booking.participantsCount || 1;
+              const isPaid = booking.paymentStatus === 'PAID';
 
                 return (
                   <div
@@ -363,10 +277,9 @@ export const TouristMyBookings: React.FC = () => {
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          );
-        })()}
+            })}
+          </div>
+        )}
 
       </main>
 
