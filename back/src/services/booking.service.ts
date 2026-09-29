@@ -278,7 +278,15 @@ export async function getTouristBookings(userId: string) {
       orderBy: { createdAt: 'desc' },
       include: {
         experience: {
-          select: { id: true, title: true, city: true, images: true, meetingPoint: true, meetingPointText: true },
+          select: {
+            id: true,
+            title: true,
+            city: true,
+            images: true,
+            meetingPoint: true,
+            meetingPointText: true,
+            guide: { select: { phone: true, telegramHandle: true } },
+          },
         },
         availableDate: { select: { id: true, date: true, slots: true, maxCapacity: true } },
       },

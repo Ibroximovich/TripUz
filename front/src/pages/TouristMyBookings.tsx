@@ -432,6 +432,28 @@ export const TouristMyBookings: React.FC = () => {
               <div className="text-slate-300">
                 {t('booking.payment_label')} <strong className={selectedBookingForSheet.paymentStatus === 'PAID' ? 'text-emerald-400' : 'text-amber-400'}>{selectedBookingForSheet.paymentStatus === 'PAID' ? t('common.paid') : t('common.unpaid')}</strong>
               </div>
+              {(selectedBookingForSheet.experience as any)?.guide?.phone && (
+                <div className="text-slate-300">
+                  {t('booking.contact_guide')} <a
+                    href={`tel:${(selectedBookingForSheet.experience as any).guide.phone}`}
+                    className="text-amber-400 font-bold hover:underline"
+                  >
+                    📞 {(selectedBookingForSheet.experience as any).guide.phone}
+                  </a>
+                </div>
+              )}
+              {(selectedBookingForSheet.experience as any)?.guide?.telegramHandle && (
+                <div className="text-slate-300">
+                  Telegram: <a
+                    href={`https://t.me/${((selectedBookingForSheet.experience as any).guide.telegramHandle as string).replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-amber-400 font-bold hover:underline"
+                  >
+                    ✈️ {(selectedBookingForSheet.experience as any).guide.telegramHandle}
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Close Button */}
