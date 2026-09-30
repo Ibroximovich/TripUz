@@ -349,7 +349,10 @@
     "profileIncompleteGoToProfile": "Profilga o'tish",
     "profileIncompleteClose": "Yopish",
     "telegram_connect": "Telegram bildirishnomalarini yoqish",
-    "telegram_connected": "✅ Telegram ulangan"
+    "telegram_connected": "✅ Telegram ulangan",
+    "telegram_banner_text": "⚠️ Telegram botni ulang — yangi bronlar haqida darhol xabar oling",
+    "telegram_banner_btn": "Botni ulash",
+    "telegram_connected_success": "Telegram bot muvaffaqiyatli ulandi!"
   },
   "footer": {
     "copyright": "© {{year}} TRIPUZ Tourism Marketplace. Barcha huquqlar himoyalangan."

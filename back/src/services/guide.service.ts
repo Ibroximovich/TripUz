@@ -568,6 +568,7 @@ export async function getGuideProfile(guideId: string) {
         avatar: true,
         phone: true,
         telegramHandle: true,
+        telegramChatId: true,
         commissionRate: true,
         role: true,
       },

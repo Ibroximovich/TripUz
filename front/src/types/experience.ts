@@ -175,6 +175,7 @@ export interface GuideProfile {
   isCustomAvatarUploaded?: boolean;
   phone?: string;
   telegramHandle?: string;
+  telegramChatId?: string;
   commissionRate: number;
   role: string;
 }

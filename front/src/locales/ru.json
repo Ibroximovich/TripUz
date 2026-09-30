@@ -349,7 +349,10 @@
     "profileIncompleteGoToProfile": "Перейти в профиль",
     "profileIncompleteClose": "Закрыть",
     "telegram_connect": "Включить Telegram-уведомления",
-    "telegram_connected": "✅ Telegram подключён"
+    "telegram_connected": "✅ Telegram подключён",
+    "telegram_banner_text": "⚠️ Подключите Telegram-бота — получайте мгновенные уведомления о новых бронированиях",
+    "telegram_banner_btn": "Подключить бота",
+    "telegram_connected_success": "Telegram-бот успешно подключен!"
   },
   "footer": {
     "copyright": "© {{year}} TRIPUZ Tourism Marketplace. Все права защищены."

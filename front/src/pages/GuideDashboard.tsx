@@ -53,6 +53,7 @@ import {
 } from '@ant-design/icons';
 import type { UploadFile, UploadFileStatus, RcFile } from 'antd/es/upload/interface';
 import { useAuthStore } from '../store/useAuthStore';
+import { getCurrentUser } from '../services/auth.api';
 import {
   getGuideStats,
   getGuideExperiences,
@@ -339,6 +340,75 @@ export const GuideDashboard: React.FC = () => {
       });
     }
   }, [profile, user, activeTabKey]);
+
+  // Telegram Bot Warning & Connection Polling
+  const [isPollingTelegram, setIsPollingTelegram] = useState<boolean>(false);
+
+  const handleConnectTelegramBot = () => {
+    const botUsername = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'tripuz_notify_bot').replace(/^@/, '');
+    const guideId = user?.id || profile?.id;
+    const url = `https://t.me/${botUsername}?start=${guideId}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setIsPollingTelegram(true);
+  };
+
+  useEffect(() => {
+    const isConnected = Boolean((user as any)?.telegramChatId || (profile as any)?.telegramChatId);
+    if (!isPollingTelegram || isConnected) {
+      if (isPollingTelegram && isConnected) {
+        setIsPollingTelegram(false);
+      }
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await getCurrentUser();
+        const freshUser = (res as any)?.data?.user || (res as any)?.data;
+        if (freshUser?.telegramChatId) {
+          updateUser(freshUser);
+          setIsPollingTelegram(false);
+          fetchData();
+          message.success(t('guide.telegram_connected_success'));
+        }
+      } catch (err) {
+        console.error('Error polling Telegram connection status:', err);
+      }
+    }, 3000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isPollingTelegram, (user as any)?.telegramChatId, (profile as any)?.telegramChatId]);
+
+  const renderTelegramBanner = (isMobile: boolean = false) => {
+    const isConnected = Boolean((user as any)?.telegramChatId || (profile as any)?.telegramChatId);
+    if (isConnected) return null;
+
+    return (
+      <div
+        className={`bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/10 border border-amber-500/40 rounded-2xl ${
+          isMobile ? 'p-3 mb-3' : 'p-4'
+        } flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-amber-950/20 backdrop-blur-md transition-all`}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-xl flex-shrink-0">⚠️</span>
+          <span className="text-xs sm:text-sm font-semibold text-amber-200 leading-snug">
+            {t('guide.telegram_banner_text')}
+          </span>
+        </div>
+        <Button
+          type="primary"
+          icon={<SendOutlined />}
+          onClick={handleConnectTelegramBot}
+          className="bg-gradient-to-r from-[#2AABEE] to-[#229ED9] hover:from-[#229ED9] hover:to-[#1E88E5] border-none text-white font-bold text-xs rounded-xl h-9 px-4 flex items-center gap-1.5 shadow-md shadow-[#2AABEE]/25 flex-shrink-0 w-full sm:w-auto justify-center"
+        >
+          {t('guide.telegram_banner_btn')}
+        </Button>
+      </div>
+    );
+  };
+
 
   /**
    * Open Modal for Creating or Editing Experience.
@@ -795,6 +865,8 @@ export const GuideDashboard: React.FC = () => {
 
         {/* 2. Mobile Native Active Tab Views */}
         <div className="px-4 py-3">
+          {/* Telegram Warning Banner (Mobile) */}
+          {renderTelegramBanner(true)}
           
           {/* TAB 1: ASOSIY / STATISTIKA (Borderless Clean Metrics) */}
           {activeTabKey === 'stats' && (
@@ -1361,6 +1433,9 @@ export const GuideDashboard: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        {/* Telegram Warning Banner (Desktop) */}
+        {renderTelegramBanner(false)}
 
         {/* Welcome Banner */}
         <Card className="bg-gradient-to-r from-[#161F28] via-[#1A2430] to-[#0F1419] border border-slate-800 rounded-3xl shadow-2xl relative overflow-hidden">
