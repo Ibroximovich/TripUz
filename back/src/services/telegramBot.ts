@@ -170,6 +170,17 @@ export async function sendBookingStatusNotification(
     return;
   }
 
+  const buttonMarkup = buildFrontendReplyMarkup("🌐 Saytga o'tish");
+  if (buttonMarkup) {
+    try {
+      await bot.sendMessage(Number(chatId), text, buttonMarkup);
+      return;
+    } catch (btnErr: any) {
+      console.error("[TelegramBot] sendBookingStatusNotification with inline button failed:", btnErr?.response?.body || btnErr?.message || btnErr);
+      // Inline button bilan yuborishda xatolik bo'lsa, oddiy xabar yuborish fallback'iga o'tadi
+    }
+  }
+
   try {
     await bot.sendMessage(Number(chatId), text);
   } catch (err) {
