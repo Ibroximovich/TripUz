@@ -23,10 +23,12 @@ import {
   BarcodeOutlined,
   CompassOutlined,
   CopyOutlined,
+  SendOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { TouristHeader } from '../components/TouristHeader';
 import { useAuthStore } from '../store/useAuthStore';
+import { getCurrentUser } from '../services/auth.api';
 import { getMyBookings } from '../services/tourist.api';
 import type { Booking } from '../types/experience';
 import { getExpTitle } from '../types/experience';
@@ -36,10 +38,48 @@ const USD_TO_UZS_RATE = 12800;
 export const TouristMyBookings: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
 
   const [selectedBookingForSheet, setSelectedBookingForSheet] = useState<Booking | null>(null);
   const [isBookingSheetOpen, setIsBookingSheetOpen] = useState<boolean>(false);
+
+  // Telegram Bot Warning & Connection Polling
+  const [isPollingTelegram, setIsPollingTelegram] = useState<boolean>(false);
+  const isTelegramConnected = Boolean((user as any)?.telegramChatId);
+
+  const handleConnectTelegramBot = () => {
+    const botUsername = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'tripuz_notify_bot').replace(/^@/, '');
+    const url = `https://t.me/${botUsername}?start=${user?.id}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setIsPollingTelegram(true);
+  };
+
+  useEffect(() => {
+    if (!isPollingTelegram || isTelegramConnected) {
+      if (isPollingTelegram && isTelegramConnected) {
+        setIsPollingTelegram(false);
+      }
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await getCurrentUser();
+        const freshUser = (res as any)?.data?.user || (res as any)?.data;
+        if (freshUser?.telegramChatId) {
+          updateUser(freshUser);
+          setIsPollingTelegram(false);
+          message.success(t('guide.telegram_connected_success', 'Telegram bot muvaffaqiyatli ulandi!'));
+        }
+      } catch (err) {
+        console.error('Error polling Telegram connection status:', err);
+      }
+    }, 3000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isPollingTelegram, isTelegramConnected]);
 
   // Set page title
   useEffect(() => {
@@ -128,6 +168,26 @@ export const TouristMyBookings: React.FC = () => {
             {t('booking.back_home')}
           </Button>
         </div>
+
+        {/* Telegram Warning Banner for Tourist */}
+        {!isTelegramConnected && (
+          <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/10 border border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-amber-950/20 backdrop-blur-md transition-all">
+            <div className="flex items-center gap-3">
+              <span className="text-xl flex-shrink-0">⚠️</span>
+              <span className="text-xs sm:text-sm font-semibold text-amber-200 leading-snug">
+                {t('booking.telegram_banner_text', 'Telegram botni ulang — bron holati haqida darhol xabar oling')}
+              </span>
+            </div>
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              onClick={handleConnectTelegramBot}
+              className="bg-gradient-to-r from-[#2AABEE] to-[#229ED9] hover:from-[#229ED9] hover:to-[#1E88E5] border-none text-white font-bold text-xs rounded-xl h-9 px-4 flex items-center gap-1.5 shadow-md shadow-[#2AABEE]/25 flex-shrink-0 w-full sm:w-auto justify-center"
+            >
+              {t('guide.telegram_banner_btn', 'Botni ulash')}
+            </Button>
+          </div>
+        )}
 
         {/* Page Banner Header */}
         <div className="bg-[#161F28] border border-slate-800 rounded-3xl p-5 sm:p-8 space-y-2 shadow-2xl">

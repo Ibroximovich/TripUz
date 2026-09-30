@@ -83,6 +83,64 @@ export async function sendBookingNotification(
   }
 }
 
+export async function sendBookingStatusNotification(
+  chatId: string | null | undefined,
+  details: {
+    status: string;
+    tourTitle: string;
+    date: string;
+    guideName: string;
+    guidePhone?: string | null;
+    guideTelegram?: string | null;
+  }
+): Promise<void> {
+  if (!bot || !chatId) return;
+
+  const cleanPhone = details.guidePhone?.trim() || "";
+  const cleanTelegram = details.guideTelegram?.trim()
+    ? details.guideTelegram.trim().replace(/^@/, "")
+    : "";
+
+  let text = "";
+  if (details.status === "CONFIRMED") {
+    text =
+      "✅ Broningiz tasdiqlandi!\n\n" +
+      `Tur: ${details.tourTitle}\n` +
+      `Sana: ${details.date}\n` +
+      `Gid: ${details.guideName}`;
+
+    if (cleanPhone) {
+      text += `\nTelefon: ${cleanPhone}`;
+    }
+    if (cleanTelegram) {
+      text += `\nTelegram: @${cleanTelegram}`;
+    }
+  } else if (details.status === "CANCELLED") {
+    text =
+      "❌ Broningiz bekor qilindi.\n\n" +
+      `Tur: ${details.tourTitle}\n` +
+      `Sana: ${details.date}`;
+
+    if (cleanPhone || cleanTelegram) {
+      text += "\n\nSavollar bo'lsa, gid bilan bog'laning:";
+      if (cleanPhone) {
+        text += `\nTelefon: ${cleanPhone}`;
+      }
+      if (cleanTelegram) {
+        text += `\nTelegram: @${cleanTelegram}`;
+      }
+    }
+  } else {
+    return;
+  }
+
+  try {
+    await bot.sendMessage(Number(chatId), text);
+  } catch (err) {
+    console.error("[TelegramBot] sendBookingStatusNotification error:", err);
+  }
+}
+
 export async function setWebhook(): Promise<void> {
   if (!bot || !token) return;
   const webhookUrl = `${env.backendUrl.replace(/\/+$/, "")}/telegram-webhook`;

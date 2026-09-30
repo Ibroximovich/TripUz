@@ -4,6 +4,7 @@ import { env } from '../config/env';
 import { HttpError } from '../middlewares/error.middleware';
 import { UpdateBookingStatusDto } from '../schemas/booking.schema';
 import { mockBookingsStore } from './booking.service';
+import { sendBookingStatusNotification } from './telegramBot';
 import {
   CreateGuideExperienceDto,
   UpdateGuideExperienceDto,
@@ -536,14 +537,53 @@ export async function updateGuideBookingStatus(
         throw new HttpError(409, 'Can only mark a CONFIRMED booking as COMPLETED');
       }
 
-      return await prisma.booking.update({
+      const updatedBooking = await prisma.booking.update({
         where: { id: bookingId },
         data: { status: dto.status as BookingStatus },
         include: {
-          user: { select: { name: true, email: true } },
-          experience: { select: { title: true } },
+          user: { select: { id: true, name: true, email: true, telegramChatId: true } },
+          experience: {
+            select: {
+              id: true,
+              title: true,
+              guide: {
+                select: {
+                  id: true,
+                  name: true,
+                  phone: true,
+                  telegramHandle: true,
+                },
+              },
+            },
+          },
+          availableDate: { select: { date: true } },
         },
       });
+
+      // Turistga Telegram bildirishnoma yuborish (fire-and-forget)
+      try {
+        if (
+          updatedBooking.user?.telegramChatId &&
+          (dto.status === 'CONFIRMED' || dto.status === 'CANCELLED')
+        ) {
+          const bookingDate = updatedBooking.availableDate?.date
+            ? new Date(updatedBooking.availableDate.date).toLocaleDateString('uz-UZ')
+            : 'Noaniq sana';
+
+          sendBookingStatusNotification(updatedBooking.user.telegramChatId, {
+            status: dto.status,
+            tourTitle: updatedBooking.experience?.title || 'Tur',
+            date: bookingDate,
+            guideName: updatedBooking.experience?.guide?.name || 'Gid',
+            guidePhone: updatedBooking.experience?.guide?.phone || '',
+            guideTelegram: updatedBooking.experience?.guide?.telegramHandle || '',
+          });
+        }
+      } catch (notifErr) {
+        console.error('[GuideService] Tourist Telegram notification error:', notifErr);
+      }
+
+      return updatedBooking;
     }
   } catch (err: any) {
     if (err instanceof HttpError) throw err;
