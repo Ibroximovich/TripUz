@@ -1,4 +1,4 @@
-﻿// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const TelegramBotLib = require("node-telegram-bot-api");
 import { env } from "../config/env";
 import prisma from "../config/prisma";
@@ -34,7 +34,17 @@ if (token) {
         where: { id: guideId },
         data: { telegramChatId: String(chatId) },
       });
-      bot.sendMessage(chatId, `Bildirishnomalar yoqildi! Salom, ${user.name}! Endi yangi bronlar haqida shu yerga xabar keladi.`);
+
+      const frontendUrl = env.frontendUrl;
+      const messageText = "✅ Bildirishnomalar muvaffaqiyatli yoqildi!\n\nEndi yangi bronlar haqida shu yerga xabar keladi.";
+
+      await bot.sendMessage(chatId, messageText, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🌐 Saytga qaytish", url: frontendUrl }
+          ]]
+        }
+      });
     } catch (err) {
       console.error("[TelegramBot] /start error:", err);
       bot.sendMessage(chatId, "Xatolik yuz berdi. Keyinroq urinib ko'\''ring.");

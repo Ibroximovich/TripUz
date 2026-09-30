@@ -19,6 +19,7 @@ const envSchema = z.object({
   PUBLIC_BASE_URL: z.string().default('http://localhost:5000'),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   BACKEND_URL: z.string().optional(),
+  FRONTEND_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -46,6 +47,7 @@ export const env = {
   publicBaseUrl: parsed.data.PUBLIC_BASE_URL.replace(/\/+$/, ''),
   telegramBotToken: parsed.data.TELEGRAM_BOT_TOKEN || '',
   backendUrl: parsed.data.BACKEND_URL || parsed.data.PUBLIC_BASE_URL || 'http://localhost:5000',
+  frontendUrl: process.env.FRONTEND_URL || parsed.data.FRONTEND_URL || parsed.data.CLIENT_URL || 'http://localhost:5173',
   isDev: parsed.data.NODE_ENV === 'development',
   isProd: parsed.data.NODE_ENV === 'production',
 };

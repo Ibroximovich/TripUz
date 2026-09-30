@@ -46,6 +46,11 @@ export async function createBooking(userId: string, dto: any) {
             },
           });
           validUserId = defaultUser.id;
+        } else if (dto.touristPhone && (!existingUser.phone || existingUser.phone.trim() === '')) {
+          await prisma.user.update({
+            where: { id: validUserId },
+            data: { phone: dto.touristPhone },
+          });
         }
       } else {
         const defaultUser = await prisma.user.upsert({
@@ -139,8 +144,8 @@ export async function createBooking(userId: string, dto: any) {
             sendBookingNotification(guide.telegramChatId, {
               tourTitle: result.experience?.title || experience.title || 'Tur',
               date: bookingDate,
-              touristName: result.user?.name || dto.touristName || 'Noaniq',
-              touristPhone: result.user?.phone || dto.touristPhone || '',
+              touristName: dto.touristName?.trim() || result.user?.name || 'Sayohatchi',
+              touristPhone: dto.touristPhone?.trim() || result.user?.phone || '',
             });
           }
         } catch (notifErr) {

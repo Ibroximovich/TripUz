@@ -343,6 +343,7 @@ export const GuideDashboard: React.FC = () => {
 
   // Telegram Bot Warning & Connection Polling
   const [isPollingTelegram, setIsPollingTelegram] = useState<boolean>(false);
+  const isTelegramConnected = Boolean(profile?.telegramChatId || (user as any)?.telegramChatId);
 
   const handleConnectTelegramBot = () => {
     const botUsername = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'tripuz_notify_bot').replace(/^@/, '');
@@ -353,9 +354,8 @@ export const GuideDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    const isConnected = Boolean((user as any)?.telegramChatId || (profile as any)?.telegramChatId);
-    if (!isPollingTelegram || isConnected) {
-      if (isPollingTelegram && isConnected) {
+    if (!isPollingTelegram || isTelegramConnected) {
+      if (isPollingTelegram && isTelegramConnected) {
         setIsPollingTelegram(false);
       }
       return;
@@ -367,6 +367,7 @@ export const GuideDashboard: React.FC = () => {
         const freshUser = (res as any)?.data?.user || (res as any)?.data;
         if (freshUser?.telegramChatId) {
           updateUser(freshUser);
+          setProfile((prev) => (prev ? { ...prev, telegramChatId: freshUser.telegramChatId } : null));
           setIsPollingTelegram(false);
           fetchData();
           message.success(t('guide.telegram_connected_success'));
@@ -379,11 +380,10 @@ export const GuideDashboard: React.FC = () => {
     return () => {
       clearInterval(interval);
     };
-  }, [isPollingTelegram, (user as any)?.telegramChatId, (profile as any)?.telegramChatId]);
+  }, [isPollingTelegram, isTelegramConnected]);
 
   const renderTelegramBanner = (isMobile: boolean = false) => {
-    const isConnected = Boolean((user as any)?.telegramChatId || (profile as any)?.telegramChatId);
-    if (isConnected) return null;
+    if (isTelegramConnected) return null;
 
     return (
       <div
@@ -1252,20 +1252,19 @@ export const GuideDashboard: React.FC = () => {
 
                     {/* Telegram Bot Connect */}
                     <div className="pt-1">
-                      {(user as any)?.telegramChatId ? (
+                      {isTelegramConnected ? (
                         <div className="flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-xs font-semibold text-emerald-400">
                           {t('guide.telegram_connected')}
                         </div>
                       ) : (
-                        <a
-                          href={`https://t.me/${(import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'tripuz_notify_bot').replace(/^@/, '')}?start=${user?.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 bg-[#0F1419] border border-slate-700 hover:border-[#2AABEE] rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-[#2AABEE] transition-all no-underline"
+                        <button
+                          type="button"
+                          onClick={handleConnectTelegramBot}
+                          className="w-full flex items-center justify-center gap-2 bg-[#0F1419] border border-slate-700 hover:border-[#2AABEE] rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-[#2AABEE] transition-all cursor-pointer"
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
                           {t('guide.telegram_connect')}
-                        </a>
+                        </button>
                       )}
                     </div>
                   </Form>
@@ -1962,6 +1961,22 @@ export const GuideDashboard: React.FC = () => {
                             {(profile?.telegramHandle || (user as any)?.telegramHandle) && (
                               <div className="text-xs text-amber-400 truncate">💬 {profile?.telegramHandle || (user as any)?.telegramHandle}</div>
                             )}
+                            <div className="pt-1">
+                              {isTelegramConnected ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                                  {t('guide.telegram_connected')}
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={handleConnectTelegramBot}
+                                  className="inline-flex items-center gap-2 bg-[#0F1419] border border-slate-700 hover:border-[#2AABEE] rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-[#2AABEE] transition-all cursor-pointer"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+                                  {t('guide.telegram_connect')}
+                                </button>
+                              )}
+                            </div>
                             <div className="text-xs text-amber-300 font-semibold pt-0.5">{t('guide.profile.commission_rate')} {profile?.commissionRate || 10}%</div>
                           </div>
                         </div>
@@ -2080,6 +2095,28 @@ export const GuideDashboard: React.FC = () => {
                                 </Form.Item>
                               </Col>
                             </Row>
+
+                            {/* Telegram Bot Status in Desktop Edit Mode */}
+                            <div className="bg-[#0F1419] p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
+                              <div>
+                                <span className="text-xs font-semibold text-slate-300 block">Telegram Bildirishnomalari</span>
+                                <span className="text-[11px] text-slate-400">Yangi bronlar haqida Telegram orqali xabar olish</span>
+                              </div>
+                              {isTelegramConnected ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                                  {t('guide.telegram_connected')}
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={handleConnectTelegramBot}
+                                  className="inline-flex items-center gap-2 bg-[#161F28] border border-slate-700 hover:border-[#2AABEE] rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-[#2AABEE] transition-all cursor-pointer"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+                                  {t('guide.telegram_connect')}
+                                </button>
+                              )}
+                            </div>
 
                             {/* Avatar Upload */}
                             <Form.Item
