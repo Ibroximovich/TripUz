@@ -577,7 +577,7 @@ export async function updateGuideBookingStatus(
             guideName: updatedBooking.experience?.guide?.name || 'Gid',
             guidePhone: updatedBooking.experience?.guide?.phone || '',
             guideTelegram: updatedBooking.experience?.guide?.telegramHandle || '',
-            lang: updatedBooking.user.language,
+            lang: updatedBooking.user?.language,
           });
         }
       } catch (notifErr) {
