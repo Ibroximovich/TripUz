@@ -1186,7 +1186,7 @@ export const GuideDashboard: React.FC = () => {
                         </div>
                       ) : (
                         <a
-                          href={`https://t.me/${import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'TripUzBot'}?start=${user?.id}`}
+                          href={`https://t.me/${(import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'tripuz_notify_bot').replace(/^@/, '')}?start=${user?.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center gap-2 bg-[#0F1419] border border-slate-700 hover:border-[#2AABEE] rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-[#2AABEE] transition-all no-underline"
