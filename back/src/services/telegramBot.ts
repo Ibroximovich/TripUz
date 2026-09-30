@@ -11,6 +11,25 @@ const token = env.telegramBotToken;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let bot: any = null;
 
+/**
+ * Yordamchi funksiya: FRONTEND_URL ni tekshirib, xavfsiz inline keyboard reply_markup hosil qiladi.
+ * Agar URL noto'g'ri yoki mavjud bo'lmasa, undefined qaytaradi (xavfsiz fallback).
+ */
+function buildFrontendReplyMarkup(buttonText: string) {
+  const rawUrl = (process.env.FRONTEND_URL || env.frontendUrl || '').trim();
+  const isValidHttpsUrl = /^https?:\/\/[^\s$.?#].[^\s]*$/i.test(rawUrl);
+  if (!isValidHttpsUrl) {
+    return undefined;
+  }
+  return {
+    reply_markup: {
+      inline_keyboard: [[
+        { text: buttonText, url: rawUrl }
+      ]]
+    }
+  };
+}
+
 if (token) {
   bot = new BotConstructor(token, { polling: false });
 
@@ -37,26 +56,15 @@ if (token) {
 
       const messageText = "✅ Bildirishnomalar muvaffaqiyatli yoqildi!\n\nEndi yangi bronlar haqida shu yerga xabar keladi.";
 
-      // FRONTEND_URL ni olish va tekshirish
-      const rawUrl = (process.env.FRONTEND_URL || env.frontendUrl || '').trim();
-      const isValidHttpsUrl = /^https?:\/\/[^\s$.?#].[^\s]*$/i.test(rawUrl);
-
-      if (isValidHttpsUrl) {
+      const buttonMarkup = buildFrontendReplyMarkup("🌐 Saytga qaytish");
+      if (buttonMarkup) {
         try {
-          await bot.sendMessage(chatId, messageText, {
-            reply_markup: {
-              inline_keyboard: [[
-                { text: "🌐 Saytga qaytish", url: rawUrl }
-              ]]
-            }
-          });
+          await bot.sendMessage(chatId, messageText, buttonMarkup);
           return;
         } catch (btnErr: any) {
           console.error("[TelegramBot] sendMessage with inline button failed:", btnErr?.response?.body || btnErr?.message || btnErr);
           // Inline button bilan yuborishda xatolik bo'lsa, oddiy xabar yuborish fallback'iga o'tadi
         }
-      } else {
-        console.warn("[TelegramBot] FRONTEND_URL is missing or not a valid HTTP/HTTPS URL:", rawUrl);
       }
 
       // Fallback: tugmasiz toza xabar yuborish
@@ -92,6 +100,18 @@ export async function sendBookingNotification(
     `\uD83D\uDCC5 Sana: ${details.date}\n` +
     `\uD83D\uDC64 Turist: ${details.touristName}\n` +
     `\uD83D\uDCDE Telefon: ${details.touristPhone || "kiritilmagan"}`;
+
+  const buttonMarkup = buildFrontendReplyMarkup("🌐 Tasdiqlash");
+  if (buttonMarkup) {
+    try {
+      await bot.sendMessage(Number(chatId), text, buttonMarkup);
+      return;
+    } catch (btnErr: any) {
+      console.error("[TelegramBot] sendBookingNotification with inline button failed:", btnErr?.response?.body || btnErr?.message || btnErr);
+      // Inline button bilan yuborishda xatolik bo'lsa, oddiy xabar yuborish fallback'iga o'tadi
+    }
+  }
+
   try {
     await bot.sendMessage(Number(chatId), text);
   } catch (err) {
