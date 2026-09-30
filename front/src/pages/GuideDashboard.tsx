@@ -241,6 +241,9 @@ export const GuideDashboard: React.FC = () => {
   // Currency calculator in modal
   const [modalPriceUsd, setModalPriceUsd] = useState<number>(25);
 
+  // Per-booking loading state for status dropdown
+  const [updatingBookingIds, setUpdatingBookingIds] = useState<Record<string, boolean>>({});
+
   const [createForm] = Form.useForm();
   const [slotForm] = Form.useForm();
   const [profileForm] = Form.useForm();
@@ -768,17 +771,28 @@ export const GuideDashboard: React.FC = () => {
   /**
    * Handle Update Booking Status
    */
-  const handleUpdateBookingStatus = async (bookingId: string, status: string) => {
+  const handleUpdateBookingStatus = async (bookingId: string, status: string): Promise<boolean> => {
+    if (updatingBookingIds[bookingId]) return false;
+    setUpdatingBookingIds((prev) => ({ ...prev, [bookingId]: true }));
     try {
       const res = await updateBookingStatus(bookingId, status);
       if (res.success) {
         message.success(t('guide.booking_status_updated', { status }));
-        fetchData();
+        await fetchData();
+        return true;
       }
+      return false;
     } catch (err: any) {
       // Prefer server's localized message over generic fallback
       const serverMsg = err?.response?.data?.message;
       message.error(serverMsg || t('guide.booking_status_error'));
+      return false;
+    } finally {
+      setUpdatingBookingIds((prev) => {
+        const next = { ...prev };
+        delete next[bookingId];
+        return next;
+      });
     }
   };
 
@@ -1892,8 +1906,9 @@ export const GuideDashboard: React.FC = () => {
                                     >
                                       <Select
                                         value={b.status}
+                                        loading={!!updatingBookingIds[b.id]}
                                         onChange={(status) => handleUpdateBookingStatus(b.id, status)}
-                                        disabled={getAllowedStatuses(b.status).length === 0}
+                                        disabled={!!updatingBookingIds[b.id] || getAllowedStatuses(b.status).length === 0}
                                         popupClassName="dark-select-dropdown"
                                         className="custom-lang-select bg-[#161F28] border-slate-700 rounded-lg text-xs w-36"
                                         options={[
@@ -1917,6 +1932,9 @@ export const GuideDashboard: React.FC = () => {
                                         ]}
                                       />
                                     </Tooltip>
+                                    {updatingBookingIds[b.id] && (
+                                      <Spin size="small" />
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -2766,17 +2784,25 @@ export const GuideDashboard: React.FC = () => {
 
             {/* Status Selector in Bottom Sheet */}
             <div className="space-y-1.5 pt-1">
-              <label className="text-xs text-slate-400 font-bold uppercase tracking-wider block">{t('common.status')}:</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider block">{t('common.status')}:</label>
+                {updatingBookingIds[selectedBookingForSheet.id] && (
+                  <Spin size="small" />
+                )}
+              </div>
               <Tooltip
                 title={getAllowedStatuses(selectedBookingForSheet.status).length === 0 ? t('guide.booking_status_terminal') : undefined}
               >
                 <Select
                   value={selectedBookingForSheet.status}
-                  onChange={(status) => {
-                    handleUpdateBookingStatus(selectedBookingForSheet.id, status);
-                    setSelectedBookingForSheet((prev) => (prev ? { ...prev, status } : null));
+                  loading={!!updatingBookingIds[selectedBookingForSheet.id]}
+                  onChange={async (status) => {
+                    const success = await handleUpdateBookingStatus(selectedBookingForSheet.id, status);
+                    if (success) {
+                      setSelectedBookingForSheet((prev) => (prev ? { ...prev, status } : null));
+                    }
                   }}
-                  disabled={getAllowedStatuses(selectedBookingForSheet.status).length === 0}
+                  disabled={!!updatingBookingIds[selectedBookingForSheet.id] || getAllowedStatuses(selectedBookingForSheet.status).length === 0}
                   popupClassName="dark-select-dropdown"
                   className="custom-lang-select bg-[#161F28] border-slate-700 rounded-xl text-xs w-full h-10"
                   options={[
