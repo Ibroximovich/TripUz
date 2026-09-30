@@ -9,6 +9,7 @@ export interface User {
   phone?: string;
   telegramHandle?: string;
   telegramChatId?: string;
+  language?: string;
   role: UserRole;
   createdAt: string;
   updatedAt: string;

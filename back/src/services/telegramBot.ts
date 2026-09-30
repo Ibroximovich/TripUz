@@ -2,6 +2,7 @@
 const TelegramBotLib = require("node-telegram-bot-api");
 import { env } from "../config/env";
 import prisma from "../config/prisma";
+import { getTelegramMessage, getTelegramButtonText, TelegramLang } from "./telegramMessages";
 
 // node-telegram-bot-api exports a class as CJS default
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,9 +55,11 @@ if (token) {
         data: { telegramChatId: String(chatId) },
       });
 
-      const messageText = "✅ Bildirishnomalar muvaffaqiyatli yoqildi!\n\nEndi yangi bronlar haqida shu yerga xabar keladi.";
+      const userLang = (user.language as TelegramLang) || 'uz';
+      const messageText = getTelegramMessage('botConnected', userLang);
 
-      const buttonMarkup = buildFrontendReplyMarkup("🌐 Saytga qaytish");
+      const buttonText = getTelegramButtonText('returnToSite', userLang);
+      const buttonMarkup = buildFrontendReplyMarkup(buttonText);
       if (buttonMarkup) {
         try {
           await bot.sendMessage(chatId, messageText, buttonMarkup);
@@ -91,17 +94,15 @@ export async function sendBookingNotification(
     date: string;
     touristName: string;
     touristPhone: string;
+    lang?: string | null;
   }
 ): Promise<void> {
   if (!bot || !chatId) return;
-  const text =
-    "\uD83C\uDF89 Yangi bron!\n\n" +
-    `\uD83D\uDCCD Tur: ${details.tourTitle}\n` +
-    `\uD83D\uDCC5 Sana: ${details.date}\n` +
-    `\uD83D\uDC64 Turist: ${details.touristName}\n` +
-    `\uD83D\uDCDE Telefon: ${details.touristPhone || "kiritilmagan"}`;
+  const userLang = (details.lang as TelegramLang) || 'uz';
+  const text = getTelegramMessage('newBooking', userLang, details);
 
-  const buttonMarkup = buildFrontendReplyMarkup("🌐 Tasdiqlash");
+  const buttonText = getTelegramButtonText('confirm', userLang);
+  const buttonMarkup = buildFrontendReplyMarkup(buttonText);
   if (buttonMarkup) {
     try {
       await bot.sendMessage(Number(chatId), text, buttonMarkup);
@@ -128,49 +129,21 @@ export async function sendBookingStatusNotification(
     guideName: string;
     guidePhone?: string | null;
     guideTelegram?: string | null;
+    lang?: string | null;
   }
 ): Promise<void> {
   if (!bot || !chatId) return;
 
-  const cleanPhone = details.guidePhone?.trim() || "";
-  const cleanTelegram = details.guideTelegram?.trim()
-    ? details.guideTelegram.trim().replace(/^@/, "")
-    : "";
-
-  let text = "";
-  if (details.status === "CONFIRMED") {
-    text =
-      "✅ Broningiz tasdiqlandi!\n\n" +
-      `Tur: ${details.tourTitle}\n` +
-      `Sana: ${details.date}\n` +
-      `Gid: ${details.guideName}`;
-
-    if (cleanPhone) {
-      text += `\nTelefon: ${cleanPhone}`;
-    }
-    if (cleanTelegram) {
-      text += `\nTelegram: @${cleanTelegram}`;
-    }
-  } else if (details.status === "CANCELLED") {
-    text =
-      "❌ Broningiz bekor qilindi.\n\n" +
-      `Tur: ${details.tourTitle}\n` +
-      `Sana: ${details.date}`;
-
-    if (cleanPhone || cleanTelegram) {
-      text += "\n\nSavollar bo'lsa, gid bilan bog'laning:";
-      if (cleanPhone) {
-        text += `\nTelefon: ${cleanPhone}`;
-      }
-      if (cleanTelegram) {
-        text += `\nTelegram: @${cleanTelegram}`;
-      }
-    }
-  } else {
+  if (details.status !== 'CONFIRMED' && details.status !== 'CANCELLED') {
     return;
   }
 
-  const buttonMarkup = buildFrontendReplyMarkup("🌐 Saytga o'tish");
+  const userLang = (details.lang as TelegramLang) || 'uz';
+  const msgKey = details.status === 'CONFIRMED' ? 'bookingConfirmed' : 'bookingCancelled';
+  const text = getTelegramMessage(msgKey, userLang, details);
+
+  const buttonText = getTelegramButtonText('goToSite', userLang);
+  const buttonMarkup = buildFrontendReplyMarkup(buttonText);
   if (buttonMarkup) {
     try {
       await bot.sendMessage(Number(chatId), text, buttonMarkup);

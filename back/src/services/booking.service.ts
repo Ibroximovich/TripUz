@@ -135,7 +135,7 @@ export async function createBooking(userId: string, dto: any) {
         try {
           const guide = await prisma.user.findUnique({
             where: { id: experience.guideId },
-            select: { telegramChatId: true },
+            select: { telegramChatId: true, language: true },
           });
           if (guide?.telegramChatId) {
             const bookingDate = result.availableDate?.date
@@ -146,6 +146,7 @@ export async function createBooking(userId: string, dto: any) {
               date: bookingDate,
               touristName: dto.touristName?.trim() || result.user?.name || 'Sayohatchi',
               touristPhone: dto.touristPhone?.trim() || result.user?.phone || '',
+              lang: guide.language,
             });
           }
         } catch (notifErr) {

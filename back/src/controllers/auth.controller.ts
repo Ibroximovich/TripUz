@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import prisma from '../config/prisma';
 import * as authService from '../services/auth.service';
 import { AuthRequest } from '../types';
 
@@ -82,6 +83,35 @@ export async function getMe(req: AuthRequest, res: Response, next: NextFunction)
     res.status(200).json({
       success: true,
       data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * PATCH /api/users/me/language & /api/auth/me/language
+ * Update authenticated user's preferred language ('uz' | 'en' | 'ru').
+ */
+export async function updateLanguage(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.user!.sub;
+    const { language } = req.body;
+
+    if (!language || !['uz', 'en', 'ru'].includes(language)) {
+      res.status(400).json({ success: false, message: 'Invalid language. Must be uz, en, or ru' });
+      return;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { language },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Language updated successfully',
+      data: { user: updatedUser },
     });
   } catch (error) {
     next(error);

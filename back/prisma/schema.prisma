@@ -45,6 +45,7 @@ model User {
   telegramHandle         String?
   telegramChatId         String?
   commissionRate         Float    @default(10)
+  language               String?  @default("uz")
   role                   Role     @default(TOURIST)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt

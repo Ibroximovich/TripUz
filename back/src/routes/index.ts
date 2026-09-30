@@ -8,6 +8,7 @@ import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import { checkoutSchema } from '../schemas/booking.schema';
 import { processCheckout } from '../controllers/booking.controller';
+import { updateLanguage } from '../controllers/auth.controller';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use('/auth', authRoutes);
 router.use('/experiences', experienceRoutes);
 router.use('/bookings', bookingRoutes);
 router.post('/payments/checkout', authenticate, validate(checkoutSchema), processCheckout);
+router.patch('/users/me/language', authenticate, updateLanguage);
 router.use('/guide', guideRoutes);
 router.use('/admin', adminRoutes);
 

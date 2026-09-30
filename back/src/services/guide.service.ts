@@ -541,7 +541,7 @@ export async function updateGuideBookingStatus(
         where: { id: bookingId },
         data: { status: dto.status as BookingStatus },
         include: {
-          user: { select: { id: true, name: true, email: true, telegramChatId: true } },
+          user: { select: { id: true, name: true, email: true, telegramChatId: true, language: true } },
           experience: {
             select: {
               id: true,
@@ -577,6 +577,7 @@ export async function updateGuideBookingStatus(
             guideName: updatedBooking.experience?.guide?.name || 'Gid',
             guidePhone: updatedBooking.experience?.guide?.phone || '',
             guideTelegram: updatedBooking.experience?.guide?.telegramHandle || '',
+            lang: updatedBooking.user.language,
           });
         }
       } catch (notifErr) {

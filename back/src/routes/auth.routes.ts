@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { googleLogin, getMe, refreshToken, logout } from '../controllers/auth.controller';
+import { googleLogin, getMe, refreshToken, logout, updateLanguage } from '../controllers/auth.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import { googleAuthSchema, refreshTokenSchema } from '../schemas/auth.schema';
@@ -29,5 +29,11 @@ router.post('/logout', logout);
  * Get current authenticated user's profile
  */
 router.get('/me', authenticate, getMe);
+
+/**
+ * PATCH /api/auth/me/language
+ * Update user language preference
+ */
+router.patch('/me/language', authenticate, updateLanguage);
 
 export default router;

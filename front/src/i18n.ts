@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { updateUserLanguage } from './services/auth.api';
 
 import uz from './locales/uz.json';
 import en from './locales/en.json';
@@ -27,6 +28,12 @@ i18n.use(initReactI18next).init({
   interpolation: {
     escapeValue: false,
   },
+});
+
+i18n.on('languageChanged', (lng) => {
+  if (['uz', 'en', 'ru'].includes(lng)) {
+    updateUserLanguage(lng);
+  }
 });
 
 export default i18n;

@@ -35,3 +35,15 @@ export async function logoutApi(refreshToken: string): Promise<void> {
     // Ignore server errors on logout — local state will be cleared anyway
   }
 }
+
+/**
+ * Update authenticated user's preferred language on backend
+ */
+export async function updateUserLanguage(language: 'uz' | 'en' | 'ru' | string): Promise<void> {
+  try {
+    await api.patch('/users/me/language', { language });
+  } catch (err) {
+    // If not authenticated or offline, silently ignore
+    console.debug('[i18n] Language sync to backend skipped:', err);
+  }
+}
