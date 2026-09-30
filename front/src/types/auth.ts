@@ -8,6 +8,7 @@ export interface User {
   isCustomAvatarUploaded?: boolean;
   phone?: string;
   telegramHandle?: string;
+  telegramChatId?: string;
   role: UserRole;
   createdAt: string;
   updatedAt: string;

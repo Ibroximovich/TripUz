@@ -1177,6 +1177,25 @@ export const GuideDashboard: React.FC = () => {
                         {t('guide.profile.save_profile_btn')}
                       </Button>
                     </div>
+
+                    {/* Telegram Bot Connect */}
+                    <div className="pt-1">
+                      {(user as any)?.telegramChatId ? (
+                        <div className="flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-xs font-semibold text-emerald-400">
+                          {t('guide.telegram_connected')}
+                        </div>
+                      ) : (
+                        <a
+                          href={`https://t.me/${import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'TripUzBot'}?start=${user?.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 bg-[#0F1419] border border-slate-700 hover:border-[#2AABEE] rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-[#2AABEE] transition-all no-underline"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+                          {t('guide.telegram_connect')}
+                        </a>
+                      )}
+                    </div>
                   </Form>
                 </div>
               )}

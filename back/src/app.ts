@@ -7,6 +7,7 @@ import { env } from './config/env';
 import { swaggerSpec } from './config/swagger';
 import apiRouter from './routes';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
+import { processTelegramUpdate, setWebhook } from './services/telegramBot';
 
 const app: Application = express();
 
@@ -91,6 +92,12 @@ import { languageMiddleware } from './middlewares/language.middleware';
 // ─── Language Middleware ────────────────────────────────_______________________
 app.use(languageMiddleware);
 
+// ─── Telegram Webhook (no auth — Telegram servers only) ───────────────────────
+app.post('/telegram-webhook', (req, res) => {
+  processTelegramUpdate(req.body);
+  res.sendStatus(200);
+});
+
 // ─── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api', apiRouter);
 
@@ -98,4 +105,9 @@ app.use('/api', apiRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-export default app;
+// ─── Telegram Webhook Setup (production) ──────────────────────────────────────
+if (env.isProd) {
+  setWebhook();
+}
+
+export default app;

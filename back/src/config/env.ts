@@ -17,6 +17,8 @@ const envSchema = z.object({
   CLIENT_URL: z.string().default('http://localhost:3000'),
   UPLOAD_DIR: z.string().default('./uploads'),
   PUBLIC_BASE_URL: z.string().default('http://localhost:5000'),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  BACKEND_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -42,6 +44,8 @@ export const env = {
   clientUrl: parsed.data.CLIENT_URL,
   uploadDir: parsed.data.UPLOAD_DIR,
   publicBaseUrl: parsed.data.PUBLIC_BASE_URL.replace(/\/+$/, ''),
+  telegramBotToken: parsed.data.TELEGRAM_BOT_TOKEN || '',
+  backendUrl: parsed.data.BACKEND_URL || parsed.data.PUBLIC_BASE_URL || 'http://localhost:5000',
   isDev: parsed.data.NODE_ENV === 'development',
   isProd: parsed.data.NODE_ENV === 'production',
 };

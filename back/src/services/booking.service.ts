@@ -1,6 +1,7 @@
 import { BookingStatus, PaymentStatus } from '@prisma/client';
 import prisma from '../config/prisma';
 import { HttpError } from '../middlewares/error.middleware';
+import { sendBookingNotification } from './telegramBot';
 import { generateVoucherCode } from '../utils/voucher';
 import { CheckoutDto } from '../schemas/booking.schema';
 import { mockExperiencesStore } from './guide.service';
@@ -124,6 +125,27 @@ export async function createBooking(userId: string, dto: any) {
             numPeople,
           };
         });
+
+        // Gidga Telegram bildirishnoma yuborish (fire-and-forget, asosiy jarayonni to'xtatmaydi)
+        try {
+          const guide = await prisma.user.findUnique({
+            where: { id: experience.guideId },
+            select: { telegramChatId: true },
+          });
+          if (guide?.telegramChatId) {
+            const bookingDate = result.availableDate?.date
+              ? new Date(result.availableDate.date).toLocaleDateString('uz-UZ')
+              : 'Noaniq sana';
+            sendBookingNotification(guide.telegramChatId, {
+              tourTitle: result.experience?.title || experience.title || 'Tur',
+              date: bookingDate,
+              touristName: result.user?.name || dto.touristName || 'Noaniq',
+              touristPhone: result.user?.phone || dto.touristPhone || '',
+            });
+          }
+        } catch (notifErr) {
+          console.error('[Booking] Telegram notification error:', notifErr);
+        }
 
         return result;
       }

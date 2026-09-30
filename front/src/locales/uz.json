@@ -347,7 +347,9 @@
     "profileIncompleteTitle": "Profilingiz to'liq emas",
     "profileIncompleteMessage": "Yangi tur qo'shishdan oldin profilingizga rasm, telefon raqami va Telegram username qo'shishingiz kerak.",
     "profileIncompleteGoToProfile": "Profilga o'tish",
-    "profileIncompleteClose": "Yopish"
+    "profileIncompleteClose": "Yopish",
+    "telegram_connect": "Telegram bildirishnomalarini yoqish",
+    "telegram_connected": "✅ Telegram ulangan"
   },
   "footer": {
     "copyright": "© {{year}} TRIPUZ Tourism Marketplace. Barcha huquqlar himoyalangan."

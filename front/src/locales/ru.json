@@ -347,7 +347,9 @@
     "profileIncompleteTitle": "Ваш профиль не заполнен",
     "profileIncompleteMessage": "Перед добавлением нового тура добавьте фото, номер телефона и никнейм Telegram в свой профиль.",
     "profileIncompleteGoToProfile": "Перейти в профиль",
-    "profileIncompleteClose": "Закрыть"
+    "profileIncompleteClose": "Закрыть",
+    "telegram_connect": "Включить Telegram-уведомления",
+    "telegram_connected": "✅ Telegram подключён"
   },
   "footer": {
     "copyright": "© {{year}} TRIPUZ Tourism Marketplace. Все права защищены."

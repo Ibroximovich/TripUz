@@ -347,7 +347,9 @@
     "profileIncompleteTitle": "Your profile is incomplete",
     "profileIncompleteMessage": "Please add a photo, phone number, and Telegram username to your profile before adding a new tour.",
     "profileIncompleteGoToProfile": "Go to profile",
-    "profileIncompleteClose": "Close"
+    "profileIncompleteClose": "Close",
+    "telegram_connect": "Enable Telegram notifications",
+    "telegram_connected": "✅ Telegram connected"
   },
   "footer": {
     "copyright": "© {{year}} TRIPUZ Tourism Marketplace. All rights reserved."

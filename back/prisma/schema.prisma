@@ -43,6 +43,7 @@ model User {
   isCustomAvatarUploaded Boolean  @default(false)
   phone                  String?
   telegramHandle         String?
+  telegramChatId         String?
   commissionRate         Float    @default(10)
   role                   Role     @default(TOURIST)
   createdAt              DateTime @default(now())
