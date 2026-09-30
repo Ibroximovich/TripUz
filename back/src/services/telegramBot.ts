@@ -20,14 +20,14 @@ if (token) {
     const guideId: string | undefined = match?.[1]?.trim();
 
     if (!guideId) {
-      bot.sendMessage(chatId, "Gid ID topilmadi. Iltimos, Gid panelidan havola orqali kiring.");
+      bot.sendMessage(chatId, "Foydalanuvchi ID topilmadi. Iltimos, saytdagi havola orqali kiring.");
       return;
     }
 
     try {
       const user = await prisma.user.findUnique({ where: { id: guideId } });
       if (!user) {
-        bot.sendMessage(chatId, "Gid topilmadi.");
+        bot.sendMessage(chatId, "Foydalanuvchi topilmadi.");
         return;
       }
       await prisma.user.update({
@@ -35,19 +35,35 @@ if (token) {
         data: { telegramChatId: String(chatId) },
       });
 
-      const frontendUrl = env.frontendUrl;
       const messageText = "✅ Bildirishnomalar muvaffaqiyatli yoqildi!\n\nEndi yangi bronlar haqida shu yerga xabar keladi.";
 
-      await bot.sendMessage(chatId, messageText, {
-        reply_markup: {
-          inline_keyboard: [[
-            { text: "🌐 Saytga qaytish", url: frontendUrl }
-          ]]
+      // FRONTEND_URL ni olish va tekshirish
+      const rawUrl = (process.env.FRONTEND_URL || env.frontendUrl || '').trim();
+      const isValidHttpsUrl = /^https?:\/\/[^\s$.?#].[^\s]*$/i.test(rawUrl);
+
+      if (isValidHttpsUrl) {
+        try {
+          await bot.sendMessage(chatId, messageText, {
+            reply_markup: {
+              inline_keyboard: [[
+                { text: "🌐 Saytga qaytish", url: rawUrl }
+              ]]
+            }
+          });
+          return;
+        } catch (btnErr: any) {
+          console.error("[TelegramBot] sendMessage with inline button failed:", btnErr?.response?.body || btnErr?.message || btnErr);
+          // Inline button bilan yuborishda xatolik bo'lsa, oddiy xabar yuborish fallback'iga o'tadi
         }
-      });
-    } catch (err) {
-      console.error("[TelegramBot] /start error:", err);
-      bot.sendMessage(chatId, "Xatolik yuz berdi. Keyinroq urinib ko'\''ring.");
+      } else {
+        console.warn("[TelegramBot] FRONTEND_URL is missing or not a valid HTTP/HTTPS URL:", rawUrl);
+      }
+
+      // Fallback: tugmasiz toza xabar yuborish
+      await bot.sendMessage(chatId, messageText);
+    } catch (err: any) {
+      console.error("[TelegramBot] /start fatal error:", err?.response?.body || err?.stack || err);
+      bot.sendMessage(chatId, "Xatolik yuz berdi. Keyinroq urinib ko'ring.");
     }
   });
 
