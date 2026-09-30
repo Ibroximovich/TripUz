@@ -19,7 +19,9 @@ export interface TelegramMessageData {
 }
 
 export function normalizeLang(lang?: string | null): TelegramLang {
-  if (lang === 'en' || lang === 'ru') return lang;
+  if (!lang) return 'uz';
+  const clean = lang.trim().toLowerCase().slice(0, 2);
+  if (clean === 'en' || clean === 'ru') return clean;
   return 'uz';
 }
 

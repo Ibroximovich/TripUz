@@ -2,7 +2,7 @@
 const TelegramBotLib = require("node-telegram-bot-api");
 import { env } from "../config/env";
 import prisma from "../config/prisma";
-import { getTelegramMessage, getTelegramButtonText, TelegramLang } from "./telegramMessages";
+import { getTelegramMessage, getTelegramButtonText, normalizeLang, TelegramLang } from "./telegramMessages";
 
 // node-telegram-bot-api exports a class as CJS default
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,16 +16,21 @@ let bot: any = null;
  * Yordamchi funksiya: FRONTEND_URL ni tekshirib, xavfsiz inline keyboard reply_markup hosil qiladi.
  * Agar URL noto'g'ri yoki mavjud bo'lmasa, undefined qaytaradi (xavfsiz fallback).
  */
-function buildFrontendReplyMarkup(buttonText: string) {
+function buildFrontendReplyMarkup(buttonText?: string, path: string = '') {
   const rawUrl = (process.env.FRONTEND_URL || env.frontendUrl || '').trim();
   const isValidHttpsUrl = /^https?:\/\/[^\s$.?#].[^\s]*$/i.test(rawUrl);
   if (!isValidHttpsUrl) {
     return undefined;
   }
+  const cleanBase = rawUrl.replace(/\/+$/, '');
+  const cleanPath = path ? (path.startsWith('/') ? path : `/${path}`) : '';
+  const finalUrl = `${cleanBase}${cleanPath}` || rawUrl;
+  const label = (buttonText && buttonText.trim()) ? buttonText.trim() : "🌐 Saytga o'tish";
+
   return {
     reply_markup: {
       inline_keyboard: [[
-        { text: buttonText, url: rawUrl }
+        { text: label, url: finalUrl }
       ]]
     }
   };
@@ -98,10 +103,32 @@ export async function sendBookingNotification(
   }
 ): Promise<void> {
   if (!bot || !chatId) return;
-  const userLang = (details.lang as TelegramLang) || 'uz';
-  const text = getTelegramMessage('newBooking', userLang, details);
 
-  const buttonText = getTelegramButtonText('confirm', userLang);
+  // 1. Gid tilini aniqlash:
+  // Birinchi details.lang tekshiriladi.
+  // Agar details.lang bo'lmasa yoki bo'sh bo'lsa, Prisma'dan shu chatId'ga ega Gid (User) tilini olamiz.
+  let rawLang = details.lang;
+  if (!rawLang) {
+    try {
+      const guideUser = await prisma.user.findFirst({
+        where: { telegramChatId: String(chatId) },
+        select: { language: true },
+      });
+      if (guideUser?.language) {
+        rawLang = guideUser.language;
+      }
+    } catch (err) {
+      console.error("[TelegramBot] Gid tilini Prisma'dan olishda xatolik:", err);
+    }
+  }
+
+  const guideLang = normalizeLang(rawLang);
+
+  // 2. Xabar matnini gid tilida olish
+  const text = getTelegramMessage('newBooking', guideLang, details);
+
+  // 3. Inline tugma matnini ham gid tilida olish ("🌐 Tasdiqlash" / "🌐 Confirm" / "🌐 Подтвердить")
+  const buttonText = getTelegramButtonText('confirm', guideLang);
   const buttonMarkup = buildFrontendReplyMarkup(buttonText);
   if (buttonMarkup) {
     try {
