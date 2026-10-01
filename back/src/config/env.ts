@@ -43,6 +43,7 @@ export const env = {
   googleClientSecret: parsed.data.GOOGLE_CLIENT_SECRET,
   commissionRate: parseFloat(parsed.data.COMMISSION_RATE),
   clientUrl: parsed.data.CLIENT_URL,
+  clientUrls: parsed.data.CLIENT_URL.split(',').map((u) => u.trim().replace(/\/+$/, '')).filter(Boolean),
   uploadDir: parsed.data.UPLOAD_DIR,
   publicBaseUrl: parsed.data.PUBLIC_BASE_URL.replace(/\/+$/, ''),
   telegramBotToken: parsed.data.TELEGRAM_BOT_TOKEN || '',
