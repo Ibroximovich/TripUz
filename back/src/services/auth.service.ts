@@ -59,19 +59,12 @@ export async function loginWithGoogle(idToken: string, requestedRole?: Role): Pr
 
   const targetId = googlePayload.sub && googlePayload.sub.startsWith('google-mock-') ? googlePayload.sub : undefined;
 
-  // Find existing user to check if custom avatar was already uploaded
-  const existingUser = await prisma.user.findUnique({
-    where: { email: googlePayload.email },
-  });
-
-  const shouldUpdateAvatar = !existingUser?.isCustomAvatarUploaded;
-
+  // To'g'ridan-to'g'ri upsert — ortiqcha findUnique so'rovini olib tashlaymiz
   const user = await prisma.user.upsert({
     where: { email: googlePayload.email },
     update: {
       name: googlePayload.name,
       role: userRole,
-      ...(shouldUpdateAvatar ? { avatar: googlePayload.picture } : {}),
     },
     create: {
       id: targetId,

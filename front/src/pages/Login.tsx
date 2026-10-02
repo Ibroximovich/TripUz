@@ -12,6 +12,7 @@ import {
   UserOutlined,
   SafetyCertificateOutlined,
   FireOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import { googleLogin } from '../services/auth.api';
 import { useAuthStore } from '../store/useAuthStore';
@@ -45,6 +46,7 @@ export const Login: React.FC = () => {
 
   // Track if Google Identity Services has already been initialized
   const isGisInitialized = useRef(false);
+  const isAuthStartedRef = useRef(false);
 
   // Set page title
   useEffect(() => {
@@ -65,9 +67,11 @@ export const Login: React.FC = () => {
             auto_select: false,
             callback: async (response: any) => {
               if (response && response.credential) {
+                isAuthStartedRef.current = true;
                 await handleGoogleAuth(response.credential, selectedRoleRef.current);
               } else {
                 setLoading(false);
+                isAuthStartedRef.current = false;
               }
             },
           });
@@ -111,6 +115,7 @@ export const Login: React.FC = () => {
    * Main login execution handler
    */
   const handleGoogleAuth = async (idToken: string, targetRole: UserRole = selectedRole) => {
+    isAuthStartedRef.current = true;
     setLoading(true);
     setErrorMessage(null);
 
@@ -159,6 +164,7 @@ export const Login: React.FC = () => {
       message.error(msg);
     } finally {
       setLoading(false);
+      isAuthStartedRef.current = false;
     }
   };
 
@@ -182,6 +188,7 @@ export const Login: React.FC = () => {
 
     setLoading(true);
     setErrorMessage(null);
+    isAuthStartedRef.current = false;
 
     // Fallback: initialize if not already initialized
     if (!isGisInitialized.current) {
@@ -192,9 +199,11 @@ export const Login: React.FC = () => {
           auto_select: false,
           callback: async (response: any) => {
             if (response && response.credential) {
+              isAuthStartedRef.current = true;
               await handleGoogleAuth(response.credential, selectedRoleRef.current);
             } else {
               setLoading(false);
+              isAuthStartedRef.current = false;
             }
           },
         });
@@ -206,17 +215,24 @@ export const Login: React.FC = () => {
 
     try {
       window.google.accounts.id.prompt((notification: any) => {
-        if (
-          notification.isNotDisplayed() ||
-          notification.isSkippedMoment() ||
-          notification.isDismissedMoment()
-        ) {
+        if (notification.isNotDisplayed()) {
           setLoading(false);
+          isAuthStartedRef.current = false;
+        } else if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
+          // Akkaunt tanlanganda prompt yopiladi va callback chaqiriladi.
+          // Shuning uchun bu yerda darhol loading o'chmaydi; faqat akkaunt tanlanmagan holda
+          // (masalan prompt "X" orqali yopilganda) birozdan so'ng loading bekor qilinadi.
+          setTimeout(() => {
+            if (!isAuthStartedRef.current) {
+              setLoading(false);
+            }
+          }, 400);
         }
       });
     } catch (err) {
       console.error('Google GIS Error:', err);
       setLoading(false);
+      isAuthStartedRef.current = false;
       message.error(t('auth.google_login_error'));
     }
   };
@@ -432,13 +448,21 @@ export const Login: React.FC = () => {
                 <Button
                   type="primary"
                   size="large"
-                  icon={<GoogleOutlined className="text-lg text-red-500" />}
-                  loading={loading}
+                  disabled={loading}
+                  icon={
+                    loading ? (
+                      <LoadingOutlined className="text-lg text-slate-800 animate-spin" />
+                    ) : (
+                      <GoogleOutlined className="text-lg text-red-500" />
+                    )
+                  }
                   onClick={handleRealGoogleLogin}
-                  className="w-full h-12 rounded-xl bg-[#F5F5F0] hover:bg-white text-slate-900 font-bold border-none shadow-lg flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.01] active:scale-[0.98]"
+                  className={`w-full h-12 rounded-xl bg-[#F5F5F0] hover:bg-white text-slate-900 font-bold border-none shadow-lg flex items-center justify-center gap-2 transition-all duration-200 ${
+                    loading ? 'opacity-80 cursor-wait' : 'hover:scale-[1.01] active:scale-[0.98]'
+                  }`}
                 >
                   {loading
-                    ? t('auth.logging_in')
+                    ? (t('auth.logging_in') || 'Kirilmoqda...')
                     : t('auth.google_login_btn', { role: isGuideMode ? t('auth.guide_label') : t('auth.tourist_label') })}
                 </Button>
 
