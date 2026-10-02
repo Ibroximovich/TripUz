@@ -17,14 +17,29 @@ let bot: any = null;
  * Agar URL noto'g'ri yoki mavjud bo'lmasa, undefined qaytaradi (xavfsiz fallback).
  */
 function buildFrontendReplyMarkup(buttonText?: string, path: string = '') {
-  const rawUrl = (process.env.FRONTEND_URL || env.frontendUrl || '').trim();
-  const isValidHttpsUrl = /^https?:\/\/[^\s$.?#].[^\s]*$/i.test(rawUrl);
-  if (!isValidHttpsUrl) {
+  const rawCandidate = (process.env.FRONTEND_URL || env.frontendUrl || env.clientUrl || '').trim();
+  if (!rawCandidate) {
     return undefined;
   }
-  const cleanBase = rawUrl.replace(/\/+$/, '');
+
+  // Agar vergul bilan bir nechta URL bo'lsa (masalan CLIENT_URL CORS ro'yxati), birinchi asosiy URL olinadi
+  const singleUrl = rawCandidate.split(',')[0].trim();
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(singleUrl);
+  } catch {
+    return undefined;
+  }
+
+  // Telegram faqat http va https protokollarini qabul qiladi
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+    return undefined;
+  }
+
+  const cleanBase = singleUrl.replace(/\/+$/, '');
   const cleanPath = path ? (path.startsWith('/') ? path : `/${path}`) : '';
-  const finalUrl = `${cleanBase}${cleanPath}` || rawUrl;
+  const finalUrl = `${cleanBase}${cleanPath}` || cleanBase;
   const label = (buttonText && buttonText.trim()) ? buttonText.trim() : "🌐 Saytga o'tish";
 
   return {

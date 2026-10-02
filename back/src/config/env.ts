@@ -48,7 +48,7 @@ export const env = {
   publicBaseUrl: parsed.data.PUBLIC_BASE_URL.replace(/\/+$/, ''),
   telegramBotToken: parsed.data.TELEGRAM_BOT_TOKEN || '',
   backendUrl: parsed.data.BACKEND_URL || parsed.data.PUBLIC_BASE_URL || 'http://localhost:5000',
-  frontendUrl: process.env.FRONTEND_URL || parsed.data.FRONTEND_URL || parsed.data.CLIENT_URL || 'http://localhost:5173',
+  frontendUrl: (process.env.FRONTEND_URL || parsed.data.FRONTEND_URL || parsed.data.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim(),
   isDev: parsed.data.NODE_ENV === 'development',
   isProd: parsed.data.NODE_ENV === 'production',
 };
