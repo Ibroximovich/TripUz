@@ -77,20 +77,12 @@ export const TouristHeader: React.FC<TouristHeaderProps> = ({
       <header className="sticky top-0 z-30 w-full bg-[#161F28]/95 backdrop-blur-xl border-b border-slate-800/80 px-4 sm:px-8 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Left: Logo & Brand Name */}
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+          <div className="flex items-center cursor-pointer group" onClick={() => navigate('/')}>
             <img
               src={logoImg}
-              alt="TRIPUZ Logo"
-              className="h-10 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_2px_8px_rgba(217,119,6,0.25)]"
+              alt="TRIPUZ"
+              className="h-12 sm:h-14 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_2px_10px_rgba(217,119,6,0.25)]"
             />
-            <div>
-              <span className="text-xl sm:text-2xl font-black font-serif tracking-wide text-white">
-                TRIPUZ
-              </span>
-              <Tag color="gold" className="ml-2 border-none bg-amber-500/10 text-amber-300 font-medium px-2 py-0.5 rounded-full text-[11px] hidden sm:inline-block border border-amber-500/20">
-                {t('nav.boutique_tours')}
-              </Tag>
-            </div>
           </div>
 
           {/* Center/Right Desktop Navigation */}
@@ -216,13 +208,12 @@ export const TouristHeader: React.FC<TouristHeaderProps> = ({
         {/* Mobile Drawer Navigation Menu */}
         <Drawer
           title={
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center">
               <img
                 src={logoImg}
-                alt="TRIPUZ Logo"
-                className="h-8 w-auto object-contain"
+                alt="TRIPUZ"
+                className="h-10 w-auto object-contain"
               />
-              <span className="font-serif font-bold text-white text-lg">TRIPUZ</span>
             </div>
           }
           placement="right"
