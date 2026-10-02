@@ -13,6 +13,7 @@ import {
   HomeOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../store/useAuthStore';
+import logoImg from '../assets/logo.png';
 
 interface TouristHeaderProps {
   currentLang?: string;
@@ -77,9 +78,11 @@ export const TouristHeader: React.FC<TouristHeaderProps> = ({
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Left: Logo & Brand Name */}
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C2703D] to-amber-500 flex items-center justify-center shadow-lg shadow-amber-950/40 group-hover:scale-105 transition-transform duration-300">
-              <CompassOutlined className="text-2xl text-white group-hover:rotate-45 transition-transform duration-500" />
-            </div>
+            <img
+              src={logoImg}
+              alt="TRIPUZ Logo"
+              className="h-10 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_2px_8px_rgba(217,119,6,0.25)]"
+            />
             <div>
               <span className="text-xl sm:text-2xl font-black font-serif tracking-wide text-white">
                 TRIPUZ
@@ -213,10 +216,12 @@ export const TouristHeader: React.FC<TouristHeaderProps> = ({
         {/* Mobile Drawer Navigation Menu */}
         <Drawer
           title={
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#C2703D] flex items-center justify-center">
-                <CompassOutlined className="text-white text-lg" />
-              </div>
+            <div className="flex items-center gap-2.5">
+              <img
+                src={logoImg}
+                alt="TRIPUZ Logo"
+                className="h-8 w-auto object-contain"
+              />
               <span className="font-serif font-bold text-white text-lg">TRIPUZ</span>
             </div>
           }
