@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { GoogleOutlined, SafetyCertificateOutlined, CompassOutlined, GlobalOutlined, KeyOutlined, CheckCircleFilled, RocketOutlined } from '@ant-design/icons';
 import { googleLogin } from '../services/auth.api';
 import { useAuthStore } from '../store/useAuthStore';
+import logoImg from '../assets/logo.png';
 import type { AxiosError } from 'axios';
 
 export const GuideLogin: React.FC = () => {
@@ -133,18 +134,15 @@ export const GuideLogin: React.FC = () => {
 
       {/* Top Header */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <CompassOutlined className="text-2xl text-white animate-pulse" />
-          </div>
-          <div>
-            <span className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-indigo-200">
-              TRIPUZ
-            </span>
-            <Tag color="cyan" className="ml-2 border-none bg-cyan-500/15 text-cyan-300 font-semibold px-2 py-0.5 rounded-full text-xs">
-              {t('auth.guide_portal')}
-            </Tag>
-          </div>
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+          <img
+            src={logoImg}
+            alt="TRIPUZ"
+            className="h-12 sm:h-14 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_2px_10px_rgba(217,119,6,0.25)]"
+          />
+          <Tag color="cyan" className="border-none bg-cyan-500/15 text-cyan-300 font-semibold px-2 py-0.5 rounded-full text-xs">
+            {t('auth.guide_portal')}
+          </Tag>
         </div>
 
         <div className="flex items-center gap-3">

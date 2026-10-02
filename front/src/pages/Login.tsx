@@ -16,6 +16,7 @@ import {
 } from '@ant-design/icons';
 import { googleLogin } from '../services/auth.api';
 import { useAuthStore } from '../store/useAuthStore';
+import logoImg from '../assets/logo.png';
 import type { UserRole } from '../types/auth';
 import type { AxiosError } from 'axios';
 
@@ -281,21 +282,13 @@ export const Login: React.FC = () => {
 
       {/* Top Navigation */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3 cursor-pointer group">
-          <div
-            className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500 ${
-              isGuideMode
-                ? 'bg-gradient-to-tr from-[#C2703D] to-amber-500 shadow-amber-900/30'
-                : 'bg-gradient-to-tr from-[#C2703D] to-amber-600 shadow-amber-950/40'
-            }`}
-          >
-            <CompassOutlined className="text-2xl text-white group-hover:rotate-45 transition-transform duration-500" />
-          </div>
-          <div>
-            <span className="text-2xl font-black font-serif tracking-wide text-white">
-              TRIPUZ
-            </span>
-          </div>
+        {/* Left: Logo & Brand Name */}
+        <div className="flex items-center cursor-pointer group" onClick={() => navigate('/')}>
+          <img
+            src={logoImg}
+            alt="TRIPUZ"
+            className="h-12 sm:h-14 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_2px_10px_rgba(217,119,6,0.25)]"
+          />
         </div>
 
         {/* Language Selection */}
