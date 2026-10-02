@@ -136,6 +136,7 @@ export interface Booking {
   status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
   paymentStatus: 'PENDING' | 'PAID' | 'REFUNDED' | 'UNPAID';
   voucherCode: string;
+  referralCode?: string | null;
   createdAt: string;
   user?: {
     id: string;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConfigProvider, theme } from 'antd';
 import Login from './pages/Login';
@@ -11,6 +11,7 @@ import TouristBookingForm from './pages/TouristBookingForm';
 import TouristMyBookings from './pages/TouristMyBookings';
 import { useAuthStore } from './store/useAuthStore';
 import { refreshTokenApi } from './services/auth.api';
+import { captureReferralFromUrl } from './utils/referral';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,9 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { accessToken, refreshToken, setTokens, logout } = useAuthStore();
 
   useEffect(() => {
+    // Capture referral code (?ref=...) on app load
+    captureReferralFromUrl();
+
     const init = async () => {
       if (accessToken && refreshToken) {
         const exp = getTokenExp(accessToken);
@@ -111,6 +115,19 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+/**
+ * Monitors URL query params for ?ref=... on route changes and persists to localStorage.
+ */
+const ReferralTracker: React.FC = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    captureReferralFromUrl(location.search);
+  }, [location.search]);
+
+  return null;
+};
+
 export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -127,6 +144,7 @@ export const App: React.FC = () => {
         }}
       >
         <BrowserRouter>
+          <ReferralTracker />
           <AppInitializer>
             <Routes>
               {/* Public Routes (redirects logged-in users away from /login) */}

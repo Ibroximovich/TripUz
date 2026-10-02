@@ -61,3 +61,20 @@ export async function getCommissions(req: Request, res: Response, next: NextFunc
     next(error);
   }
 }
+
+/**
+ * GET /api/admin/referrals
+ * Get referral statistics grouped by referral code.
+ */
+export async function getReferrals(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const stats = await adminService.getReferralStats();
+
+    res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    next(error);
+  }
+}

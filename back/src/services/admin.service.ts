@@ -102,3 +102,41 @@ export async function getPlatformStats() {
     commissionRate: env.commissionRate,
   };
 }
+
+/**
+ * Get hotel referral statistics grouped by referralCode.
+ * Returns total bookings, total amount, and commission per referralCode.
+ */
+export async function getReferralStats() {
+  const hotelCommissionRate = env.commissionRate || 0.10;
+
+  const groups = await prisma.booking.groupBy({
+    by: ['referralCode'],
+    where: {
+      referralCode: { not: null },
+    },
+    _count: {
+      id: true,
+    },
+    _sum: {
+      totalPrice: true,
+    },
+    orderBy: {
+      _count: {
+        id: 'desc',
+      },
+    },
+  });
+
+  return groups.map((g) => {
+    const totalAmount = Number(g._sum.totalPrice ?? 0);
+    const commission = parseFloat((totalAmount * hotelCommissionRate).toFixed(2));
+    return {
+      referralCode: g.referralCode,
+      totalBookings: g._count.id,
+      totalAmount,
+      commission,
+      commissionRate: hotelCommissionRate,
+    };
+  });
+}

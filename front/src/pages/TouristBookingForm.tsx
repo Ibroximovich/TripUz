@@ -26,6 +26,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { getPublicExperienceById, createTouristBooking } from '../services/tourist.api';
 import type { Experience, AvailableDate } from '../types/experience';
 import { getExpTitle } from '../types/experience';
+import { getActiveReferral } from '../utils/referral';
 
 const USD_TO_UZS_RATE = 12800;
 
@@ -119,6 +120,7 @@ export const TouristBookingForm: React.FC = () => {
     setServerError(null);
 
     try {
+      const activeReferral = getActiveReferral();
       const payload = {
         experienceId,
         slotId,
@@ -126,6 +128,7 @@ export const TouristBookingForm: React.FC = () => {
         touristName: values.touristName,
         touristEmail: values.touristEmail,
         touristPhone: values.touristPhone || '',
+        referralCode: activeReferral || undefined,
       };
 
       const res = await createTouristBooking(payload);

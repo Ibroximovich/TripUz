@@ -1,6 +1,7 @@
 import { api } from './api';
 import type { ApiResponse } from '../types/auth';
 import type { Experience, Booking } from '../types/experience';
+import { getActiveReferral } from '../utils/referral';
 
 export interface CreateBookingDto {
   experienceId: string;
@@ -11,6 +12,7 @@ export interface CreateBookingDto {
   touristName?: string;
   touristEmail?: string;
   touristPhone?: string;
+  referralCode?: string | null;
 }
 
 /**
@@ -35,7 +37,12 @@ export async function getPublicExperienceById(id: string): Promise<ApiResponse<E
  * Create a new tourist booking
  */
 export async function createTouristBooking(dto: CreateBookingDto): Promise<ApiResponse<Booking>> {
-  const response = await api.post<ApiResponse<Booking>>('/bookings', dto);
+  const refCode = dto.referralCode !== undefined ? dto.referralCode : getActiveReferral();
+  const payload = {
+    ...dto,
+    ...(refCode ? { referralCode: refCode } : {}),
+  };
+  const response = await api.post<ApiResponse<Booking>>('/bookings', payload);
   return response.data;
 }
 

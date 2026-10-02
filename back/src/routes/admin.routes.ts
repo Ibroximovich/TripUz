@@ -3,6 +3,7 @@ import {
   createExperience,
   getAllBookings,
   getCommissions,
+  getReferrals,
 } from '../controllers/admin.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { requireRole } from '../middlewares/role.middleware';
@@ -31,5 +32,11 @@ router.get('/bookings', getAllBookings);
  * Admin: View commission report per guide + platform stats
  */
 router.get('/commissions', getCommissions);
+
+/**
+ * GET /api/admin/referrals
+ * Admin: View referral statistics grouped by referralCode
+ */
+router.get('/referrals', getReferrals);
 
 export default router;

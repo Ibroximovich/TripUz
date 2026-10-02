@@ -12,6 +12,7 @@ export const createBookingSchema = z.object({
   touristName: z.string().optional(),
   touristEmail: z.string().optional(),
   touristPhone: z.string().optional(),
+  referralCode: z.string().optional().nullable(),
 });
 
 /**

@@ -102,6 +102,7 @@ export async function createBooking(userId: string, dto: any) {
               voucherCode,
               status: BookingStatus.PENDING,
               paymentStatus: PaymentStatus.PENDING,
+              referralCode: dto.referralCode?.trim() || null,
             },
             include: {
               experience: { select: { id: true, title: true, price: true, priceUsd: true, images: true, city: true } },
@@ -222,6 +223,7 @@ export async function createBooking(userId: string, dto: any) {
     providerCommission,
     providerPayout,
     numPeople,
+    referralCode: dto.referralCode?.trim() || null,
   };
 
   mockBookingsStore.unshift(mockBooking);

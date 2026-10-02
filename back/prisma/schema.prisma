@@ -140,6 +140,7 @@ model Booking {
   status            BookingStatus @default(PENDING)
   paymentStatus     PaymentStatus @default(PENDING)
   voucherCode       String        @unique
+  referralCode      String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -152,5 +153,6 @@ model Booking {
   @@index([experienceId])
   @@index([dateId])
   @@index([voucherCode])
+  @@index([referralCode])
   @@map("bookings")
 }
