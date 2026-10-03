@@ -706,7 +706,222 @@ PENDING booking uchun mock to'lov jarayoni. To'lov muvaffaqiyatli bo'lsa:
       },
 
       // ─── ADMIN ────────────────────────────────────────────────────────────────
+      '/admin/stats': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Admin Dashboard statistikasi',
+          description: "Jami gidlar, turistlar, turlar, buyurtmalar holati, platforma daromadi va oxirgi 30 kunlik trend.",
+          security: [{ BearerAuth: [] }],
+          responses: {
+            200: {
+              description: 'Dashboard statistikasi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        type: 'object',
+                        properties: {
+                          users: {
+                            type: 'object',
+                            properties: {
+                              guidesCount: { type: 'integer', example: 12 },
+                              touristsCount: { type: 'integer', example: 140 },
+                              totalUsers: { type: 'integer', example: 152 },
+                            },
+                          },
+                          experiences: {
+                            type: 'object',
+                            properties: {
+                              total: { type: 'integer', example: 25 },
+                              active: { type: 'integer', example: 20 },
+                              inactive: { type: 'integer', example: 5 },
+                            },
+                          },
+                          bookings: {
+                            type: 'object',
+                            properties: {
+                              total: { type: 'integer', example: 85 },
+                              pending: { type: 'integer', example: 10 },
+                              confirmed: { type: 'integer', example: 25 },
+                              completed: { type: 'integer', example: 45 },
+                              cancelled: { type: 'integer', example: 5 },
+                            },
+                          },
+                          financials: {
+                            type: 'object',
+                            properties: {
+                              totalRevenue: { type: 'number', example: 4250.0 },
+                              platformCommission: { type: 'number', example: 425.0 },
+                              commissionRate: { type: 'number', example: 0.1 },
+                              currency: { type: 'string', example: 'USD' },
+                            },
+                          },
+                          last30DaysTrend: {
+                            type: 'array',
+                            items: {
+                              type: 'object',
+                              properties: {
+                                date: { type: 'string', example: '2026-10-01' },
+                                bookingsCount: { type: 'integer', example: 4 },
+                                revenue: { type: 'number', example: 200.0 },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: '#/components/responses/Unauthorized' },
+            403: { $ref: '#/components/responses/Forbidden' },
+          },
+        },
+      },
+
+      '/admin/guides': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Barcha gidlar ro\'yxati (Paginatsiya va qidiruv)',
+          description: "Gidlar ro'yxati, ularning turlari soni, buyurtmalari, umumiy tushumi va komissiya foizi.",
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Sahifa raqami' },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 }, description: 'Har sahifadagi elementlar soni' },
+            { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Ism, email yoki telefon bo\'yicha qidiruv' },
+          ],
+          responses: {
+            200: {
+              description: 'Gidlar ro\'yxati',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string', example: 'Jasur Karimov' },
+                            email: { type: 'string', example: 'jasur@tripuz.uz' },
+                            phone: { type: 'string', example: '+998901234567' },
+                            avatar: { type: 'string', nullable: true },
+                            commissionRate: { type: 'number', example: 10 },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            experiencesCount: { type: 'integer', example: 3 },
+                            bookingsCount: { type: 'integer', example: 15 },
+                            totalRevenue: { type: 'number', example: 1200.0 },
+                          },
+                        },
+                      },
+                      pagination: {
+                        type: 'object',
+                        properties: {
+                          total: { type: 'integer', example: 25 },
+                          page: { type: 'integer', example: 1 },
+                          limit: { type: 'integer', example: 10 },
+                          totalPages: { type: 'integer', example: 3 },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: '#/components/responses/Unauthorized' },
+            403: { $ref: '#/components/responses/Forbidden' },
+          },
+        },
+      },
+
+      '/admin/guides/{id}': {
+        patch: {
+          tags: ['Admin'],
+          summary: 'Gid komissiya foizini yangilash',
+          description: 'Gidning platformaga to\'laydigan komissiya stavkasini (masalan: 10, 15, 20 foiz) belgilash.',
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Gid IDsi' },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['commissionRate'],
+                  properties: {
+                    commissionRate: { type: 'number', example: 12.5, description: 'Yangi komissiya foizi (0-100)' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Komissiya muvaffaqiyatli yangilandi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      message: { type: 'string', example: 'Gid komissiya foizi muvaffaqiyatli yangilandi' },
+                      data: { type: 'object' },
+                    },
+                  },
+                },
+              },
+            },
+            400: { $ref: '#/components/responses/BadRequest' },
+            401: { $ref: '#/components/responses/Unauthorized' },
+            403: { $ref: '#/components/responses/Forbidden' },
+            404: { $ref: '#/components/responses/NotFound' },
+          },
+        },
+      },
+
       '/admin/experiences': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Barcha turlar ro\'yxati (Moderatsiya uchun)',
+          description: 'Platformadagi barcha turlar (qaysi gidga tegishliligi bilan, filtrlash imkoni bor).',
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+            { name: 'city', in: 'query', schema: { type: 'string' }, description: 'Shahar bo\'yicha filter' },
+            { name: 'isActive', in: 'query', schema: { type: 'boolean' }, description: 'Faol yoki yashirilgan turlar' },
+            { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Tur nomi bo\'yicha qidiruv' },
+            { name: 'guideId', in: 'query', schema: { type: 'string' }, description: 'Gid IDsi bo\'yicha filter' },
+          ],
+          responses: {
+            200: {
+              description: 'Turlar ro\'yxati',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { type: 'array', items: { type: 'object' } },
+                      pagination: { type: 'object' },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: '#/components/responses/Unauthorized' },
+            403: { $ref: '#/components/responses/Forbidden' },
+          },
+        },
         post: {
           tags: ['Admin'],
           summary: "Yangi tur qo'shish (Admin)",
@@ -770,33 +985,111 @@ PENDING booking uchun mock to'lov jarayoni. To'lov muvaffaqiyatli bo'lsa:
           },
         },
       },
-      '/admin/bookings': {
-        get: {
+
+      '/admin/experiences/{id}/status': {
+        patch: {
           tags: ['Admin'],
-          summary: "Barcha buyurtmalar (Admin)",
-          description: "Platformadagi barcha buyurtmalar, status bo'yicha filter imkoni bilan",
+          summary: 'Tur holatini faollashtirish yoki yashirish',
+          description: 'Nomaqbul yoki eskirgan turni yashirish yoki qayta faollashtirish.',
           security: [{ BearerAuth: [] }],
           parameters: [
-            {
-              in: 'query',
-              name: 'status',
-              schema: {
-                type: 'string',
-                enum: ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'],
-              },
-              description: "Status bo'yicha filter (ixtiyoriy)",
-            },
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Tur IDsi' },
           ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['isActive'],
+                  properties: {
+                    isActive: { type: 'boolean', example: false, description: 'true = faol, false = yashirish' },
+                  },
+                },
+              },
+            },
+          },
           responses: {
             200: {
-              description: "Barcha buyurtmalar",
+              description: 'Tur holati yangilandi',
               content: {
                 'application/json': {
                   schema: {
                     type: 'object',
                     properties: {
                       success: { type: 'boolean', example: true },
-                      data: { type: 'array', items: { $ref: '#/components/schemas/Booking' } },
+                      message: { type: 'string', example: 'Tur holati muvaffaqiyatli yashirildi' },
+                      data: { type: 'object' },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: '#/components/responses/Unauthorized' },
+            403: { $ref: '#/components/responses/Forbidden' },
+            404: { $ref: '#/components/responses/NotFound' },
+          },
+        },
+      },
+
+      '/admin/experiences/{id}': {
+        delete: {
+          tags: ['Admin'],
+          summary: 'Turni o\'chirish (yoki yashirish)',
+          description: 'Agar turda buyurtmalar bo\'lmasa o\'chiriladi, aks holda yashiriladi.',
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Tur IDsi' },
+          ],
+          responses: {
+            200: {
+              description: 'Tur muvaffaqiyatli o\'chirildi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      message: { type: 'string', example: 'Tur muvaffaqiyatli o\'chirildi' },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: '#/components/responses/Unauthorized' },
+            403: { $ref: '#/components/responses/Forbidden' },
+            404: { $ref: '#/components/responses/NotFound' },
+          },
+        },
+      },
+
+      '/admin/bookings': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Barcha buyurtmalar ro\'yxati (Monitoring)',
+          description: 'Barcha turist va gidlar o\'rtasidagi buyurtmalar, to\'liq filtrlar va qidiruv bilan.',
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] } },
+            { name: 'paymentStatus', in: 'query', schema: { type: 'string', enum: ['PENDING', 'PAID', 'REFUNDED'] } },
+            { name: 'guideId', in: 'query', schema: { type: 'string' } },
+            { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Voucher kodi, turist yoki tur nomi' },
+            { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' } },
+            { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' } },
+          ],
+          responses: {
+            200: {
+              description: 'Buyurtmalar ro\'yxati',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { type: 'array', items: { type: 'object' } },
+                      pagination: { type: 'object' },
                     },
                   },
                 },
@@ -807,6 +1100,53 @@ PENDING booking uchun mock to'lov jarayoni. To'lov muvaffaqiyatli bo'lsa:
           },
         },
       },
+
+      '/admin/bookings/{id}/status': {
+        patch: {
+          tags: ['Admin'],
+          summary: 'Buyurtma holatini yangilash',
+          description: 'Admin tomonidan buyurtma holatini o\'zgartirish (masalan: COMPLETED yoki CANCELLED).',
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Buyurtma IDsi' },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['status'],
+                  properties: {
+                    status: { type: 'string', enum: ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'], example: 'COMPLETED' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Buyurtma holati yangilandi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      message: { type: 'string', example: 'Buyurtma holati yangilandi' },
+                      data: { type: 'object' },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: '#/components/responses/Unauthorized' },
+            403: { $ref: '#/components/responses/Forbidden' },
+            404: { $ref: '#/components/responses/NotFound' },
+          },
+        },
+      },
+
       '/admin/commissions': {
         get: {
           tags: ['Admin'],
@@ -846,6 +1186,45 @@ Shuningdek, umumiy platforma statistikasi ham qaytariladi.
                           commissionByGuide: {
                             type: 'array',
                             items: { $ref: '#/components/schemas/CommissionReport' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: '#/components/responses/Unauthorized' },
+            403: { $ref: '#/components/responses/Forbidden' },
+          },
+        },
+      },
+
+      '/admin/referrals': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Mehmonxona va hamkorlar referral statistikasi',
+          description: 'Referral kodlar orqali qilingan buyurtmalar soni, jami summasi va hisoblangan komissiya.',
+          security: [{ BearerAuth: [] }],
+          responses: {
+            200: {
+              description: 'Referral statistikasi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            referralCode: { type: 'string', example: 'REGISTON_HOTEL' },
+                            totalBookings: { type: 'integer', example: 14 },
+                            totalAmount: { type: 'number', example: 700.0 },
+                            commission: { type: 'number', example: 70.0 },
+                            commissionRate: { type: 'number', example: 0.1 },
                           },
                         },
                       },
