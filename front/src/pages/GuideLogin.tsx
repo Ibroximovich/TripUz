@@ -82,9 +82,9 @@ export const GuideLogin: React.FC = () => {
           duration: 3,
         });
 
-        // Navigate to Guide Dashboard
+        // Navigate to appropriate Dashboard
         setTimeout(() => {
-          navigate('/guide/dashboard');
+          navigate(user.role === 'ADMIN' ? '/admin' : '/guide/dashboard');
         }, 1000);
       } else {
         throw new Error(response.message || t('auth.login_failed'));

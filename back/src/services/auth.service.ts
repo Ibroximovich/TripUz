@@ -48,8 +48,21 @@ async function storeRefreshTokenHash(userId: string, rawRefreshToken: string): P
 export async function loginWithGoogle(idToken: string, requestedRole?: Role): Promise<AuthTokens> {
   const googlePayload = await verifyGoogleToken(idToken);
 
+  const existingUser = await prisma.user.findUnique({
+    where: { email: googlePayload.email },
+  });
+
+  const isAdminEmail =
+    googlePayload.email.toLowerCase() === 'azamovsarvar555@gmail.com' ||
+    (process.env.ADMIN_EMAIL && googlePayload.email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase());
+
   let userRole: Role;
-  if (requestedRole) {
+  if (isAdminEmail || existingUser?.role === Role.ADMIN) {
+    userRole = Role.ADMIN;
+  } else if (existingUser) {
+    // Preserve existing role
+    userRole = existingUser.role;
+  } else if (requestedRole) {
     userRole = requestedRole;
   } else if (googlePayload.email.includes('guide') || googlePayload.email.includes('jasur')) {
     userRole = Role.GUIDE;
@@ -59,7 +72,6 @@ export async function loginWithGoogle(idToken: string, requestedRole?: Role): Pr
 
   const targetId = googlePayload.sub && googlePayload.sub.startsWith('google-mock-') ? googlePayload.sub : undefined;
 
-  // To'g'ridan-to'g'ri upsert — ortiqcha findUnique so'rovini olib tashlaymiz
   const user = await prisma.user.upsert({
     where: { email: googlePayload.email },
     update: {

@@ -148,7 +148,9 @@ export const Login: React.FC = () => {
 
         // Redirect based on active role
         const redirectPath =
-          targetRole === 'GUIDE' || effectiveUser.role === 'GUIDE' || effectiveUser.role === 'ADMIN'
+          effectiveUser.role === 'ADMIN'
+            ? '/admin'
+            : targetRole === 'GUIDE' || effectiveUser.role === 'GUIDE'
             ? '/guide/dashboard'
             : '/home';
 
