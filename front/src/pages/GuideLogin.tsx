@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Input, Divider, Alert, message, Tag, Modal, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { GoogleOutlined, SafetyCertificateOutlined, CompassOutlined, GlobalOutlined, KeyOutlined, CheckCircleFilled, RocketOutlined } from '@ant-design/icons';
+import { GoogleOutlined, SafetyCertificateOutlined, GlobalOutlined, KeyOutlined, CheckCircleFilled, RocketOutlined } from '@ant-design/icons';
 import { googleLogin } from '../services/auth.api';
 import { useAuthStore } from '../store/useAuthStore';
 import logoImg from '../assets/logo.png';

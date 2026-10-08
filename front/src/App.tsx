@@ -9,6 +9,12 @@ import TouristExperiencesList from './pages/TouristExperiencesList';
 import TouristExperienceDetail from './pages/TouristExperienceDetail';
 import TouristBookingForm from './pages/TouristBookingForm';
 import TouristMyBookings from './pages/TouristMyBookings';
+import { AdminLayout } from './components/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminGuides from './pages/admin/AdminGuides';
+import AdminExperiences from './pages/admin/AdminExperiences';
+import AdminBookings from './pages/admin/AdminBookings';
+import AdminReferrals from './pages/admin/AdminReferrals';
 import { useAuthStore } from './store/useAuthStore';
 import { refreshTokenApi } from './services/auth.api';
 import { captureReferralFromUrl } from './utils/referral';
@@ -44,12 +50,23 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 /**
+ * Protects admin routes — only allows users with role === 'ADMIN'.
+ */
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/home" replace />;
+  return <>{children}</>;
+};
+
+/**
  * Public routes (e.g. /login): if user is already logged in, redirect to their dashboard/home.
  */
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (isAuthenticated && user) {
-    const dest = user.role === 'GUIDE' || user.role === 'ADMIN' ? '/guide/dashboard' : '/home';
+    const dest =
+      user.role === 'ADMIN' ? '/admin' : user.role === 'GUIDE' ? '/guide/dashboard' : '/home';
     return <Navigate to={dest} replace />;
   }
   return <>{children}</>;
@@ -62,7 +79,8 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const RootRedirect: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
   if (isAuthenticated && user) {
-    const dest = user.role === 'GUIDE' || user.role === 'ADMIN' ? '/guide/dashboard' : '/home';
+    const dest =
+      user.role === 'ADMIN' ? '/admin' : user.role === 'GUIDE' ? '/guide/dashboard' : '/home';
     return <Navigate to={dest} replace />;
   }
   return <Navigate to="/login" replace />;
@@ -219,6 +237,22 @@ export const App: React.FC = () => {
                   </PrivateRoute>
                 }
               />
+
+              {/* Protected Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminLayout />
+                  </AdminRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="guides" element={<AdminGuides />} />
+                <Route path="experiences" element={<AdminExperiences />} />
+                <Route path="bookings" element={<AdminBookings />} />
+                <Route path="referrals" element={<AdminReferrals />} />
+              </Route>
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/login" replace />} />
