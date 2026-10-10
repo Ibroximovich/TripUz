@@ -27,6 +27,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { TouristHeader } from '../components/TouristHeader';
+import { TouristFooter } from '../components/TouristFooter';
 import { useAuthStore } from '../store/useAuthStore';
 import { getCurrentUser } from '../services/auth.api';
 import { getMyBookings } from '../services/tourist.api';
@@ -443,10 +444,8 @@ export const TouristMyBookings: React.FC = () => {
         )}
       </Drawer>
 
-      {/* Footer */}
-      <footer className="w-full bg-[#0a0e17] border-t border-slate-900 text-center py-6 text-slate-500 text-xs mt-8 hidden sm:block">
-        {t('footer.copyright', { year: new Date().getFullYear() })}
-      </footer>
+      {/* Comprehensive Legal Footer */}
+      <TouristFooter />
     </div>
   );
 };

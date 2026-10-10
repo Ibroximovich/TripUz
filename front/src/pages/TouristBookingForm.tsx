@@ -22,6 +22,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { TouristHeader } from '../components/TouristHeader';
+import { TouristFooter } from '../components/TouristFooter';
 import { useAuthStore } from '../store/useAuthStore';
 import { getPublicExperienceById, createTouristBooking } from '../services/tourist.api';
 import type { Experience, AvailableDate } from '../types/experience';
@@ -303,7 +304,7 @@ export const TouristBookingForm: React.FC = () => {
                   icon={<CheckCircleOutlined />}
                   className="bg-[#C2703D] hover:bg-[#A85B2D] border-none font-bold rounded-xl h-12 text-sm shadow-xl"
                 >
-                  {t('booking.submit_btn', { price: totalPrice.toFixed(2) })}
+                  {Math.round(totalPrice * USD_TO_UZS_RATE).toLocaleString()} UZS (${totalPrice.toFixed(2)}) — Buyurtmani tasdiqlash
                 </Button>
               </div>
             </Form>
@@ -348,10 +349,14 @@ export const TouristBookingForm: React.FC = () => {
                 </div>
                 <div className="pt-2 border-t border-slate-800 flex items-center justify-between font-bold text-sm">
                   <span className="text-white">{t('booking.price_total')}</span>
-                  <span className="text-amber-400 font-serif text-lg">${totalPrice.toFixed(2)} USD</span>
-                </div>
-                <div className="text-right text-[11px] text-slate-400">
-                  ~{Math.round(totalPrice * USD_TO_UZS_RATE).toLocaleString()} UZS
+                  <div className="text-right">
+                    <span className="text-amber-400 font-serif text-lg block">
+                      {Math.round(totalPrice * USD_TO_UZS_RATE).toLocaleString()} UZS
+                    </span>
+                    <span className="text-xs text-slate-400 font-normal">
+                      (${totalPrice.toFixed(2)} USD)
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -365,10 +370,8 @@ export const TouristBookingForm: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full bg-[#0a0e17] border-t border-slate-900 text-center py-6 text-slate-500 text-xs mt-12">
-        {t('footer.copyright', { year: new Date().getFullYear() })}
-      </footer>
+      {/* Comprehensive Legal Footer */}
+      <TouristFooter />
     </div>
   );
 };

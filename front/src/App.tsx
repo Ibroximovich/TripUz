@@ -15,6 +15,8 @@ import AdminGuides from './pages/admin/AdminGuides';
 import AdminExperiences from './pages/admin/AdminExperiences';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminReferrals from './pages/admin/AdminReferrals';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import { useAuthStore } from './store/useAuthStore';
 import { refreshTokenApi } from './services/auth.api';
 import { captureReferralFromUrl } from './utils/referral';
@@ -182,6 +184,11 @@ export const App: React.FC = () => {
                   </PublicRoute>
                 }
               />
+
+              {/* Public Legal Pages (Terms & Privacy) */}
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/offer" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
 
               {/* Root redirect */}
               <Route path="/" element={<RootRedirect />} />

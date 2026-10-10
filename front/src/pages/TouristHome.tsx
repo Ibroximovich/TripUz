@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { TouristHeader } from '../components/TouristHeader';
+import { TouristFooter } from '../components/TouristFooter';
 import { ExperienceImageSlider } from './GuideDashboard';
 import { getPublicExperiences } from '../services/tourist.api';
 import type { Experience } from '../types/experience';
@@ -213,11 +214,13 @@ export const TouristHome: React.FC = () => {
                       </Tag>
                     }
                     priceBadge={
-                      <div className="bg-[#0F1419]/90 border border-amber-400/30 text-white font-black text-sm px-3.5 py-1 rounded-2xl backdrop-blur-md shadow-xl">
-                        <span className="text-amber-400 font-serif font-bold text-base">${displayPrice}</span>
-                        <span className="text-[10px] text-slate-300 block font-normal">
-                          ~{uzsEstimate.toLocaleString()} UZS
-                        </span>
+                      <div className="bg-[#0F1419]/95 border border-amber-400/40 text-white font-black text-xs px-3 py-1.5 rounded-2xl backdrop-blur-md shadow-xl text-right">
+                        <div className="text-amber-400 font-bold text-sm tracking-tight">
+                          {uzsEstimate.toLocaleString()} UZS
+                        </div>
+                        <div className="text-[10px] text-slate-300 font-normal">
+                          (${displayPrice} USD)
+                        </div>
                       </div>
                     }
                   />
@@ -292,10 +295,8 @@ export const TouristHome: React.FC = () => {
 
       </main>
 
-      {/* Footer */}
-      <footer className="w-full bg-[#0a0e17] border-t border-slate-900 text-center py-6 text-slate-500 text-xs mt-12">
-        {t('footer.copyright', { year: new Date().getFullYear() })}
-      </footer>
+      {/* Comprehensive Legal Footer */}
+      <TouristFooter />
     </div>
   );
 };

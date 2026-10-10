@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, Button, Input, Divider, Alert, message, Tag, Modal, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { GoogleOutlined, SafetyCertificateOutlined, GlobalOutlined, KeyOutlined, CheckCircleFilled, RocketOutlined } from '@ant-design/icons';
@@ -307,8 +307,13 @@ export const GuideLogin: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full text-center py-4 text-slate-600 text-xs z-10 border-t border-slate-900/60">
-        {t('auth.terms_footer', { year: new Date().getFullYear() })}
+      <footer className="w-full text-center py-4 text-slate-500 text-xs z-10 border-t border-slate-900/60 space-y-1">
+        <div>© {new Date().getFullYear()} «TRIPHUB» (STIR: 313386937). Sirdaryo viloyati. Barcha huquqlar himoyalangan.</div>
+        <div className="flex items-center justify-center gap-3 text-[11px] text-slate-400">
+          <Link to="/terms" className="hover:text-amber-400 transition-colors">Ommaviy oferta</Link>
+          <span>•</span>
+          <Link to="/privacy" className="hover:text-amber-400 transition-colors">Maxfiylik siyosati</Link>
+        </div>
       </footer>
 
       {/* Modal for Custom Google ID Token Input */}

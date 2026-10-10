@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { TouristHeader } from '../components/TouristHeader';
+import { TouristFooter } from '../components/TouristFooter';
 import { getPublicExperienceById } from '../services/tourist.api';
 import type { Experience, AvailableDate } from '../types/experience';
 import { getExpTitle, getExpDescription, getExpMeetingPoint, formatLanguageName } from '../types/experience';
@@ -303,8 +304,12 @@ export const TouristExperienceDetail: React.FC = () => {
               
               <div>
                 <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t('experience.price_per_person')}</div>
-                <div className="text-3xl font-serif font-black text-amber-400 mt-1">${priceUsd} USD</div>
-                <div className="text-xs text-slate-400 mt-0.5">~{priceUzs.toLocaleString()} UZS</div>
+                <div className="text-2xl sm:text-3xl font-serif font-black text-amber-400 mt-1">
+                  {priceUzs.toLocaleString()} UZS
+                </div>
+                <div className="text-xs font-semibold text-slate-300 mt-0.5">
+                  (${priceUsd} USD)
+                </div>
               </div>
 
               {/* Available Slot Picker */}
@@ -389,10 +394,8 @@ export const TouristExperienceDetail: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full bg-[#0a0e17] border-t border-slate-900 text-center py-6 text-slate-500 text-xs mt-12">
-        {t('footer.copyright', { year: new Date().getFullYear() })}
-      </footer>
+      {/* Comprehensive Legal Footer */}
+      <TouristFooter />
     </div>
   );
 };
