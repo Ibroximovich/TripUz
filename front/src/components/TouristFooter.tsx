@@ -5,9 +5,7 @@ import {
   LockOutlined,
   EnvironmentOutlined,
   MailOutlined,
-  PhoneOutlined,
   FileTextOutlined,
-  CheckCircleOutlined,
 } from '@ant-design/icons';
 import logoImg from '../assets/logo.png';
 

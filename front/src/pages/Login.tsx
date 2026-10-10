@@ -4,7 +4,6 @@ import { Card, Button, Input, Alert, message, Tag, Modal, Select, Segmented } fr
 import { useTranslation } from 'react-i18next';
 import {
   GoogleOutlined,
-  CompassOutlined,
   GlobalOutlined,
   KeyOutlined,
   CheckCircleFilled,
