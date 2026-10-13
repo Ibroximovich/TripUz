@@ -594,20 +594,34 @@ export const GuideDashboard: React.FC = () => {
       const priceUzs = Math.round(priceUsd * USD_TO_UZS_RATE);
       const durationHours = Number(values.durationHours);
 
-      const mainTitle = values.title_uz || values.title || '';
-      const mainDesc = values.description_uz || values.description || '';
-      const mainMp = values.meetingPointText_uz || values.meetingPoint || '';
+      // Retrieve all form values to ensure language fields aren't lost
+      const allFormValues = createForm.getFieldsValue(true);
+      const titleUz = (values.title_uz || allFormValues.title_uz || '').trim();
+      const titleEn = (values.title_en || allFormValues.title_en || '').trim();
+      const titleRu = (values.title_ru || allFormValues.title_ru || '').trim();
+
+      const descUz = (values.description_uz || allFormValues.description_uz || '').trim();
+      const descEn = (values.description_en || allFormValues.description_en || '').trim();
+      const descRu = (values.description_ru || allFormValues.description_ru || '').trim();
+
+      const mpUz = (values.meetingPointText_uz || allFormValues.meetingPointText_uz || '').trim();
+      const mpEn = (values.meetingPointText_en || allFormValues.meetingPointText_en || '').trim();
+      const mpRu = (values.meetingPointText_ru || allFormValues.meetingPointText_ru || '').trim();
+
+      const mainTitle = titleUz || titleEn || titleRu || values.title || '';
+      const mainDesc = descUz || descEn || descRu || values.description || '';
+      const mainMp = mpUz || mpEn || mpRu || values.meetingPoint || '';
 
       const dto = {
         title: mainTitle,
-        title_uz: mainTitle,
-        title_en: values.title_en || mainTitle,
-        title_ru: values.title_ru || mainTitle,
+        title_uz: titleUz || mainTitle,
+        title_en: titleEn || mainTitle,
+        title_ru: titleRu || mainTitle,
         description: mainDesc,
-        description_uz: mainDesc,
-        description_en: values.description_en || mainDesc,
-        description_ru: values.description_ru || mainDesc,
-        city: values.city || 'Samarqand',
+        description_uz: descUz || mainDesc,
+        description_en: descEn || mainDesc,
+        description_ru: descRu || mainDesc,
+        city: values.city || allFormValues.city || 'Samarqand',
         priceUsd,
         priceUzs,
         price: priceUsd,
@@ -615,11 +629,11 @@ export const GuideDashboard: React.FC = () => {
         duration: `${durationHours} soat`,
         meetingPoint: mainMp,
         meetingPointText: mainMp,
-        meetingPointText_uz: mainMp,
-        meetingPointText_en: values.meetingPointText_en || mainMp,
-        meetingPointText_ru: values.meetingPointText_ru || mainMp,
-        meetingPointMapUrl: values.meetingPointMapUrl || '',
-        languages: values.languages || ["O'zbekcha"],
+        meetingPointText_uz: mpUz || mainMp,
+        meetingPointText_en: mpEn || mainMp,
+        meetingPointText_ru: mpRu || mainMp,
+        meetingPointMapUrl: values.meetingPointMapUrl || allFormValues.meetingPointMapUrl || '',
+        languages: values.languages || allFormValues.languages || ["O'zbekcha"],
         images: imageUrls,
       };
 
@@ -2324,6 +2338,7 @@ export const GuideDashboard: React.FC = () => {
       >
         <Form
           form={createForm}
+          preserve={true}
           layout="vertical"
           onFinish={handleSubmitTour}
           onValuesChange={(changed) => {
@@ -2372,21 +2387,32 @@ export const GuideDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Tour Title (UZ / EN / RU) */}
-          {formLangTab === 'uz' && (
+          {/* Tour Title (UZ / EN / RU) - All mounted so tab switching never deletes values */}
+          <div style={{ display: formLangTab === 'uz' ? 'block' : 'none' }}>
             <Form.Item
               name="title_uz"
               label={<span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Tur Sarlavhasi (O'zbekcha) *</span>}
-              rules={[{ required: true, min: 3, message: 'Tur sarlavhasi kamida 3 ta belgi bo\'lishi shart' }]}
+              rules={[
+                {
+                  validator: (_, val) => {
+                    const all = createForm.getFieldsValue(true);
+                    const hasTitle = (val && String(val).trim().length >= 3) ||
+                                     (all.title_en && String(all.title_en).trim().length >= 3) ||
+                                     (all.title_ru && String(all.title_ru).trim().length >= 3);
+                    if (hasTitle) return Promise.resolve();
+                    return Promise.reject(new Error("Kamida bitta tilda tur sarlavhasi kiritilishi shart (kamida 3 ta belgi)"));
+                  },
+                },
+              ]}
             >
               <Input
                 placeholder="Masalan: Samarqand Registon va Qadimiy Afrosiyob Sayohati"
                 className="bg-[#161F28] border-slate-800 text-slate-200 text-sm rounded-xl py-2"
               />
             </Form.Item>
-          )}
+          </div>
 
-          {formLangTab === 'en' && (
+          <div style={{ display: formLangTab === 'en' ? 'block' : 'none' }}>
             <Form.Item
               name="title_en"
               label={
@@ -2401,9 +2427,9 @@ export const GuideDashboard: React.FC = () => {
                 className="bg-[#161F28] border-slate-800 text-slate-200 text-sm rounded-xl py-2"
               />
             </Form.Item>
-          )}
+          </div>
 
-          {formLangTab === 'ru' && (
+          <div style={{ display: formLangTab === 'ru' ? 'block' : 'none' }}>
             <Form.Item
               name="title_ru"
               label={
@@ -2418,7 +2444,7 @@ export const GuideDashboard: React.FC = () => {
                 className="bg-[#161F28] border-slate-800 text-slate-200 text-sm rounded-xl py-2"
               />
             </Form.Item>
-          )}
+          </div>
 
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12}>
@@ -2485,13 +2511,24 @@ export const GuideDashboard: React.FC = () => {
               </Form.Item>
             </Col>
 
-            {/* Meeting Point Text (UZ / EN / RU) */}
+            {/* Meeting Point Text (UZ / EN / RU) - All mounted so tab switching never deletes values */}
             <Col xs={24} sm={12}>
-              {formLangTab === 'uz' && (
+              <div style={{ display: formLangTab === 'uz' ? 'block' : 'none' }}>
                 <Form.Item
                   name="meetingPointText_uz"
                   label={<span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Uchrashuv Joyi Tavsifi (O'zbekcha) *</span>}
-                  rules={[{ required: true, min: 2, message: 'Uchrashuv joyi kamida 2 ta belgi bo\'lishi shart' }]}
+                  rules={[
+                    {
+                      validator: (_, val) => {
+                        const all = createForm.getFieldsValue(true);
+                        const hasMp = (val && String(val).trim().length >= 2) ||
+                                      (all.meetingPointText_en && String(all.meetingPointText_en).trim().length >= 2) ||
+                                      (all.meetingPointText_ru && String(all.meetingPointText_ru).trim().length >= 2);
+                        if (hasMp) return Promise.resolve();
+                        return Promise.reject(new Error("Kamida bitta tilda uchrashuv joyi kiritilishi shart (kamida 2 ta belgi)"));
+                      },
+                    },
+                  ]}
                 >
                   <Input
                     prefix={<EnvironmentOutlined className="text-emerald-400 mr-1" />}
@@ -2499,9 +2536,9 @@ export const GuideDashboard: React.FC = () => {
                     className="bg-[#161F28] border-slate-800 text-slate-200 text-xs rounded-xl py-2"
                   />
                 </Form.Item>
-              )}
+              </div>
 
-              {formLangTab === 'en' && (
+              <div style={{ display: formLangTab === 'en' ? 'block' : 'none' }}>
                 <Form.Item
                   name="meetingPointText_en"
                   label={<span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Meeting Point Description (English)</span>}
@@ -2512,9 +2549,9 @@ export const GuideDashboard: React.FC = () => {
                     className="bg-[#161F28] border-slate-800 text-slate-200 text-xs rounded-xl py-2"
                   />
                 </Form.Item>
-              )}
+              </div>
 
-              {formLangTab === 'ru' && (
+              <div style={{ display: formLangTab === 'ru' ? 'block' : 'none' }}>
                 <Form.Item
                   name="meetingPointText_ru"
                   label={<span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Описание места встречи (Русский)</span>}
@@ -2525,7 +2562,7 @@ export const GuideDashboard: React.FC = () => {
                     className="bg-[#161F28] border-slate-800 text-slate-200 text-xs rounded-xl py-2"
                   />
                 </Form.Item>
-              )}
+              </div>
             </Col>
           </Row>
 
@@ -2581,12 +2618,23 @@ export const GuideDashboard: React.FC = () => {
             />
           </Form.Item>
 
-          {/* Description (UZ / EN / RU) */}
-          {formLangTab === 'uz' && (
+          {/* Description (UZ / EN / RU) - All mounted so tab switching never deletes values */}
+          <div style={{ display: formLangTab === 'uz' ? 'block' : 'none' }}>
             <Form.Item
               name="description_uz"
               label={<span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Batafsil Tavsif (O'zbekcha) *</span>}
-              rules={[{ required: true, min: 3, message: 'Tavsif kamida 3 ta belgi bo\'lishi shart' }]}
+              rules={[
+                {
+                  validator: (_, val) => {
+                    const all = createForm.getFieldsValue(true);
+                    const hasDesc = (val && String(val).trim().length >= 3) ||
+                                    (all.description_en && String(all.description_en).trim().length >= 3) ||
+                                    (all.description_ru && String(all.description_ru).trim().length >= 3);
+                    if (hasDesc) return Promise.resolve();
+                    return Promise.reject(new Error("Kamida bitta tilda tavsif kiritilishi shart (kamida 3 ta belgi)"));
+                  },
+                },
+              ]}
             >
               <Input.TextArea
                 rows={3}
@@ -2594,9 +2642,9 @@ export const GuideDashboard: React.FC = () => {
                 className="bg-[#161F28] border-slate-800 text-slate-200 text-xs rounded-xl p-3"
               />
             </Form.Item>
-          )}
+          </div>
 
-          {formLangTab === 'en' && (
+          <div style={{ display: formLangTab === 'en' ? 'block' : 'none' }}>
             <Form.Item
               name="description_en"
               label={<span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Detailed Description (English)</span>}
@@ -2607,9 +2655,9 @@ export const GuideDashboard: React.FC = () => {
                 className="bg-[#161F28] border-slate-800 text-slate-200 text-xs rounded-xl p-3"
               />
             </Form.Item>
-          )}
+          </div>
 
-          {formLangTab === 'ru' && (
+          <div style={{ display: formLangTab === 'ru' ? 'block' : 'none' }}>
             <Form.Item
               name="description_ru"
               label={<span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Подробное описание (Русский)</span>}
@@ -2620,7 +2668,7 @@ export const GuideDashboard: React.FC = () => {
                 className="bg-[#161F28] border-slate-800 text-slate-200 text-xs rounded-xl p-3"
               />
             </Form.Item>
-          )}
+          </div>
 
           {/* Image Upload Component */}
           <Form.Item
