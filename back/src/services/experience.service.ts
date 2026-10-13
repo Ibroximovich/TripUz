@@ -24,8 +24,18 @@ export function localizeExperience<T extends Partial<Experience>>(exp: T, lang: 
     futureDates = futureDates.filter((d: any) => new Date(d.date) >= now);
   }
 
+  // Sanitize guide avatar if it contains invalid fakepath or local file path
+  let guideObj = (exp as any).guide;
+  if (guideObj && typeof guideObj.avatar === 'string') {
+    const rawAvatar = guideObj.avatar.trim();
+    if (rawAvatar.includes('fakepath') || rawAvatar.includes('\\') || (!rawAvatar.startsWith('http://') && !rawAvatar.startsWith('https://'))) {
+      guideObj = { ...guideObj, avatar: null };
+    }
+  }
+
   return {
     ...exp,
+    guide: guideObj,
     location: cityText,
     maxGroupSize: (exp as any).maxGroupSize || 10,
     meetingPointText,

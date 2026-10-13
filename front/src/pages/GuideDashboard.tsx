@@ -168,10 +168,14 @@ export const ExperienceImageSlider: React.FC<{
  * (lh3.googleusercontent.com) are treated as "no custom avatar uploaded".
  */
 function isRealAvatar(url?: string | null, isCustomUploaded?: boolean): boolean {
-  if (isCustomUploaded === true) return true;
   if (!url || typeof url !== 'string' || !url.trim()) return false;
   const cleanUrl = url.trim().toLowerCase();
   
+  // Strictly reject fake paths, local file paths, or anything that is not a valid http(s) URL
+  if (cleanUrl.includes('fakepath') || cleanUrl.includes('\\') || (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://'))) {
+    return false;
+  }
+
   // Known placeholder hosts and automatic profile picture hosts (including Google avatars)
   const nonCustomPatterns = [
     'ui-avatars.com',
@@ -802,7 +806,22 @@ export const GuideDashboard: React.FC = () => {
   const handleUpdateProfileSubmit = async (values: any) => {
     setSubmitting(true);
     try {
-      const res = await updateGuideProfile(values);
+      const payload = { ...values };
+      // Always prioritize cleanly uploaded avatar URL if present
+      if (uploadedAvatarUrl && (uploadedAvatarUrl.startsWith('http://') || uploadedAvatarUrl.startsWith('https://'))) {
+        payload.avatar = uploadedAvatarUrl;
+      }
+      // Never allow fakepath or invalid non-http strings
+      if (typeof payload.avatar === 'string') {
+        const clean = payload.avatar.trim();
+        if (clean.includes('fakepath') || clean.includes('\\') || (!clean.startsWith('http://') && !clean.startsWith('https://'))) {
+          const existingAvatar = profile?.avatar || user?.avatar;
+          payload.avatar = (existingAvatar && (existingAvatar.startsWith('http://') || existingAvatar.startsWith('https://')) && !existingAvatar.includes('fakepath'))
+            ? existingAvatar
+            : null;
+        }
+      }
+      const res = await updateGuideProfile(payload);
       if (res.success && res.data) {
         setProfile(res.data);
         if (user) {
@@ -1203,16 +1222,24 @@ export const GuideDashboard: React.FC = () => {
                       </Form.Item>
                     </div>
 
-                    {/* Avatar Upload */}
+                    {/* Hidden Avatar field to prevent file input bubbling from polluting form value */}
+                    <Form.Item name="avatar" hidden>
+                      <Input type="hidden" />
+                    </Form.Item>
+
+                    {/* Avatar Upload UI */}
                     <Form.Item
-                      name="avatar"
                       label={<span className="text-slate-300 text-xs font-semibold">{t('guide.profile.avatar')}</span>}
                       className="m-0 pt-2"
                     >
-                      <div className="space-y-2">
+                      <div className="space-y-2" onChange={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-3 bg-[#0F1419] p-3 rounded-xl border border-slate-800">
-                          {uploadedAvatarUrl && (
-                            <Avatar size={40} src={uploadedAvatarUrl} className="border border-amber-400 flex-shrink-0" />
+                          {(uploadedAvatarUrl || (profile?.avatar && !profile.avatar.includes('fakepath') ? profile.avatar : null)) && (
+                            <Avatar
+                              size={40}
+                              src={uploadedAvatarUrl || profile?.avatar}
+                              className="border border-amber-400 flex-shrink-0"
+                            />
                           )}
                           <Upload
                             customRequest={async (options) => {
@@ -2136,15 +2163,23 @@ export const GuideDashboard: React.FC = () => {
                               )}
                             </div>
 
-                            {/* Avatar Upload */}
+                            {/* Hidden Avatar field to prevent file input bubbling from polluting form value */}
+                            <Form.Item name="avatar" hidden>
+                              <Input type="hidden" />
+                            </Form.Item>
+
+                            {/* Avatar Upload UI */}
                             <Form.Item
-                              name="avatar"
                               label={<span className="text-slate-300 text-xs font-semibold">{t('guide.profile.avatar')}</span>}
                             >
-                              <div className="flex items-center gap-4 bg-[#0F1419] p-4 rounded-2xl border border-slate-800">
+                              <div className="flex items-center gap-4 bg-[#0F1419] p-4 rounded-2xl border border-slate-800" onChange={(e) => e.stopPropagation()}>
                                 <Avatar
                                   size={64}
-                                  src={uploadedAvatarUrl || profileForm.getFieldValue('avatar') || profile?.avatar || user?.avatar}
+                                  src={
+                                    uploadedAvatarUrl ||
+                                    (profile?.avatar && !profile.avatar.includes('fakepath') ? profile.avatar : undefined) ||
+                                    (user?.avatar && !user.avatar.includes('fakepath') ? user.avatar : undefined)
+                                  }
                                   icon={<UserOutlined />}
                                   className="bg-[#C2703D] border-2 border-amber-400 flex-shrink-0 shadow-md"
                                 />

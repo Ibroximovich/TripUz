@@ -268,7 +268,13 @@ export const TouristHome: React.FC = () => {
                         <div className="flex items-center gap-2.5">
                           <Avatar
                             size={28}
-                            src={(exp as any).guide?.avatarUrl || (exp as any).guide?.avatar}
+                            src={
+                              ((exp as any).guide?.avatarUrl && (exp as any).guide.avatarUrl.startsWith('http') && !(exp as any).guide.avatarUrl.includes('fakepath'))
+                                ? (exp as any).guide.avatarUrl
+                                : ((exp as any).guide?.avatar && (exp as any).guide.avatar.startsWith('http') && !(exp as any).guide.avatar.includes('fakepath'))
+                                  ? (exp as any).guide.avatar
+                                  : undefined
+                            }
                             icon={<UserOutlined />}
                             className="bg-[#C2703D] border border-amber-400/60 flex-shrink-0"
                           />

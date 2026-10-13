@@ -149,9 +149,10 @@ export async function createGuideExperience(guideId: string, dto: CreateGuideExp
       ];
       const avatarUrl = guideUser.avatar?.trim() ?? '';
       const isAutoAvatar = autoAvatarPatterns.some((p) => avatarUrl.toLowerCase().includes(p));
+      const isInvalidAvatar = avatarUrl.includes('fakepath') || avatarUrl.includes('\\') || (!avatarUrl.startsWith('http://') && !avatarUrl.startsWith('https://'));
       const hasCustomAvatar =
-        guideUser.isCustomAvatarUploaded === true ||
-        (avatarUrl.length > 0 && !isAutoAvatar);
+        !isInvalidAvatar &&
+        (guideUser.isCustomAvatarUploaded === true || (avatarUrl.length > 0 && !isAutoAvatar));
 
       const missingFields: string[] = [];
       if (!hasCustomAvatar) missingFields.push('avatar');
@@ -644,7 +645,16 @@ export async function getGuideProfile(guideId: string) {
  */
 export async function updateGuideProfile(guideId: string, dto: UpdateGuideProfileDto) {
   await ensureGuideUserExists(guideId);
-  const isSettingAvatar = dto.avatar !== undefined && Boolean(dto.avatar);
+  let cleanAvatar = dto.avatar;
+  if (cleanAvatar !== undefined && cleanAvatar !== null) {
+    const trimmed = cleanAvatar.trim();
+    if (trimmed.includes('fakepath') || trimmed.includes('\\') || (!trimmed.startsWith('http://') && !trimmed.startsWith('https://'))) {
+      cleanAvatar = undefined; // Reject invalid fakepath and non-http strings
+    } else {
+      cleanAvatar = trimmed;
+    }
+  }
+  const isSettingAvatar = cleanAvatar !== undefined && Boolean(cleanAvatar);
   try {
     const updatedUser = (await prisma.user.update({
       where: { id: guideId },
@@ -652,7 +662,7 @@ export async function updateGuideProfile(guideId: string, dto: UpdateGuideProfil
         name: dto.name || undefined,
         phone: dto.phone !== undefined ? dto.phone : undefined,
         telegramHandle: dto.telegramHandle !== undefined ? dto.telegramHandle : undefined,
-        avatar: dto.avatar !== undefined ? dto.avatar : undefined,
+        avatar: cleanAvatar !== undefined ? cleanAvatar : undefined,
         ...(isSettingAvatar ? { isCustomAvatarUploaded: true } as any : {}),
         commissionRate: 10,
       },

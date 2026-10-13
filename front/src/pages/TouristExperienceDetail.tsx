@@ -255,7 +255,13 @@ export const TouristExperienceDetail: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <Avatar
                       size={56}
-                      src={experience.guide.avatarUrl || experience.guide.avatar}
+                      src={
+                        (experience.guide.avatarUrl && experience.guide.avatarUrl.startsWith('http') && !experience.guide.avatarUrl.includes('fakepath'))
+                          ? experience.guide.avatarUrl
+                          : (experience.guide.avatar && experience.guide.avatar.startsWith('http') && !experience.guide.avatar.includes('fakepath'))
+                            ? experience.guide.avatar
+                            : undefined
+                      }
                       icon={<UserOutlined />}
                       className="bg-[#C2703D] border-2 border-amber-400 flex-shrink-0"
                     />
