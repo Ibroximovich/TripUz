@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Tag, Divider } from 'antd';
-import { ArrowLeftOutlined, SafetyCertificateOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Button, Tag } from 'antd';
+import { ArrowLeftOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { TouristHeader } from '../components/TouristHeader';
 import { TouristFooter } from '../components/TouristFooter';
 

@@ -47,6 +47,7 @@ export const Login: React.FC = () => {
   // Track if Google Identity Services has already been initialized
   const isGisInitialized = useRef(false);
   const isAuthStartedRef = useRef(false);
+  const googleBtnContainerRef = useRef<HTMLDivElement>(null);
 
   // Set page title
   useEffect(() => {
@@ -75,6 +76,18 @@ export const Login: React.FC = () => {
               }
             },
           });
+
+          // Render native Google popup button into overlay container
+          if (googleBtnContainerRef.current) {
+            window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
+              type: 'standard',
+              theme: 'outline',
+              size: 'large',
+              text: 'signin_with',
+              shape: 'rectangular',
+              width: 380,
+            });
+          }
         } catch (err) {
           console.error('Failed to initialize Google Identity Services:', err);
           isGisInitialized.current = false;
@@ -192,7 +205,20 @@ export const Login: React.FC = () => {
     setErrorMessage(null);
     isAuthStartedRef.current = false;
 
-    // Fallback: initialize if not already initialized
+    // 1. Reset Google cooldown cookie so account chooser is never suppressed
+    try {
+      document.cookie = 'g_state=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = `g_state=;path=/;domain=${window.location.hostname};expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    } catch (_) {}
+
+    // 2. Safety timeout: automatically reset loading after 3 seconds if popup didn't fire
+    setTimeout(() => {
+      if (!isAuthStartedRef.current) {
+        setLoading(false);
+      }
+    }, 3000);
+
+    // 3. Fallback: initialize if not already initialized
     if (!isGisInitialized.current) {
       try {
         isGisInitialized.current = true;
@@ -215,15 +241,20 @@ export const Login: React.FC = () => {
       }
     }
 
+    // 4. Try native button click if rendered
+    try {
+      const nativeBtn = googleBtnContainerRef.current?.querySelector('div[role=button]') as HTMLElement;
+      if (nativeBtn) {
+        nativeBtn.click();
+      }
+    } catch (_) {}
+
     try {
       window.google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed()) {
           setLoading(false);
           isAuthStartedRef.current = false;
         } else if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
-          // Akkaunt tanlanganda prompt yopiladi va callback chaqiriladi.
-          // Shuning uchun bu yerda darhol loading o'chmaydi; faqat akkaunt tanlanmagan holda
-          // (masalan prompt "X" orqali yopilganda) birozdan so'ng loading bekor qilinadi.
           setTimeout(() => {
             if (!isAuthStartedRef.current) {
               setLoading(false);
@@ -438,27 +469,37 @@ export const Login: React.FC = () => {
 
               {/* Main Auth Actions */}
               <div className="space-y-4">
-                {/* Primary Google Login Button */}
-                <Button
-                  type="primary"
-                  size="large"
-                  disabled={loading}
-                  icon={
-                    loading ? (
-                      <LoadingOutlined className="text-lg text-slate-800 animate-spin" />
-                    ) : (
-                      <GoogleOutlined className="text-lg text-red-500" />
-                    )
-                  }
-                  onClick={handleRealGoogleLogin}
-                  className={`w-full h-12 rounded-xl bg-[#F5F5F0] hover:bg-white text-slate-900 font-bold border-none shadow-lg flex items-center justify-center gap-2 transition-all duration-200 ${
-                    loading ? 'opacity-80 cursor-wait' : 'hover:scale-[1.01] active:scale-[0.98]'
-                  }`}
-                >
-                  {loading
-                    ? (t('auth.logging_in') || 'Kirilmoqda...')
-                    : t('auth.google_login_btn', { role: isGuideMode ? t('auth.guide_label') : t('auth.tourist_label') })}
-                </Button>
+                {/* Primary Google Login Button Container */}
+                <div className="relative w-full h-12 overflow-hidden rounded-xl">
+                  {/* Invisible native Google button layer on top - captures direct clicks to guarantee popup */}
+                  <div
+                    ref={googleBtnContainerRef}
+                    className="absolute inset-0 z-20 opacity-[0.001] flex items-center justify-center cursor-pointer pointer-events-auto"
+                    style={{ width: '100%', height: '100%', transform: 'scale(1.2)' }}
+                  />
+
+                  {/* Primary Visual Google Login Button */}
+                  <Button
+                    type="primary"
+                    size="large"
+                    disabled={loading}
+                    icon={
+                      loading ? (
+                        <LoadingOutlined className="text-lg text-slate-800 animate-spin" />
+                      ) : (
+                        <GoogleOutlined className="text-lg text-red-500" />
+                      )
+                    }
+                    onClick={handleRealGoogleLogin}
+                    className={`w-full h-12 rounded-xl bg-[#F5F5F0] hover:bg-white text-slate-900 font-bold border-none shadow-lg flex items-center justify-center gap-2 transition-all duration-200 z-10 ${
+                      loading ? 'opacity-80 cursor-wait' : 'hover:scale-[1.01] active:scale-[0.98]'
+                    }`}
+                  >
+                    {loading
+                      ? (t('auth.logging_in') || 'Kirilmoqda...')
+                      : t('auth.google_login_btn', { role: isGuideMode ? t('auth.guide_label') : t('auth.tourist_label') })}
+                  </Button>
+                </div>
 
                 <div className="text-center text-[11px] text-slate-500 px-2 leading-relaxed">
                   {t('auth.terms_agree')}
