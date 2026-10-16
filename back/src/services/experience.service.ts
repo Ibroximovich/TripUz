@@ -195,6 +195,51 @@ export async function createExperience(data: CreateExperienceDto) {
   const meetingPointText_en = data.meetingPointText_en || meetingPointText_uz || data.meetingPointText || data.meetingPoint;
   const meetingPointText_ru = data.meetingPointText_ru || meetingPointText_uz || data.meetingPointText || data.meetingPoint;
 
+  let targetGuideId = data.guideId;
+
+  // Agar guideId yo'q bo'lsa va yangi gid ma'lumotlari kiritilgan bo'lsa
+  if (!targetGuideId && (data as any).newGuideEmail) {
+    const email = (data as any).newGuideEmail.trim().toLowerCase();
+    let guideUser = await prisma.user.findUnique({ where: { email } });
+    if (!guideUser) {
+      guideUser = await prisma.user.create({
+        data: {
+          email,
+          name: (data as any).newGuideName?.trim() || 'Gid',
+          phone: (data as any).newGuidePhone?.trim() || null,
+          telegramHandle: (data as any).newGuideTelegram?.trim() || null,
+          avatar: (data as any).newGuideAvatar?.trim() || null,
+          isCustomAvatarUploaded: !!(data as any).newGuideAvatar,
+          role: 'GUIDE',
+        },
+      });
+    } else {
+      guideUser = await prisma.user.update({
+        where: { id: guideUser.id },
+        data: {
+          role: 'GUIDE',
+          phone: (data as any).newGuidePhone?.trim() || guideUser.phone,
+          telegramHandle: (data as any).newGuideTelegram?.trim() || guideUser.telegramHandle,
+          avatar: (data as any).newGuideAvatar?.trim() || guideUser.avatar,
+          isCustomAvatarUploaded: (data as any).newGuideAvatar ? true : guideUser.isCustomAvatarUploaded,
+        },
+      });
+    }
+    targetGuideId = guideUser.id;
+  }
+
+  // Agar hali ham targetGuideId bo'sh bo'lsa, bazadagi admin yoki birinchi gidni olamiz
+  if (!targetGuideId) {
+    const fallbackUser = await prisma.user.findFirst({
+      where: { role: { in: ['ADMIN', 'GUIDE'] } },
+    });
+    if (fallbackUser) {
+      targetGuideId = fallbackUser.id;
+    } else {
+      throw new HttpError(400, "Turni biriktirish uchun tizimda admin yoki gid topilmadi");
+    }
+  }
+
   const experience = await prisma.experience.create({
     data: {
       title: data.title,
@@ -217,7 +262,7 @@ export async function createExperience(data: CreateExperienceDto) {
       meetingPointText_en,
       meetingPointText_ru,
       meetingPointMapUrl: data.meetingPointMapUrl || null,
-      guideId: data.guideId || 'admin-id',
+      guideId: targetGuideId,
       images: (data.images || []) as any,
       languages: (data.languages || ["O'zbekcha"]) as any,
       isActive: true,
