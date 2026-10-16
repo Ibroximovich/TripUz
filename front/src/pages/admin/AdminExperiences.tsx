@@ -296,6 +296,7 @@ export const AdminExperiences: React.FC = () => {
     {
       title: 'Tur Nomi',
       key: 'title',
+      width: 240,
       render: (_: any, record: any) => (
         <div className="max-w-xs">
           <div className="font-bold text-white text-sm truncate">{record.title}</div>
@@ -308,17 +309,18 @@ export const AdminExperiences: React.FC = () => {
     {
       title: 'Gid',
       key: 'guide',
+      width: 220,
       render: (_: any, record: any) => (
         <div className="flex items-center gap-2">
           <Avatar
             size="small"
             src={record.guide?.avatar}
             icon={<UserOutlined />}
-            className="bg-amber-600/30 text-amber-300"
+            className="bg-amber-600/30 text-amber-300 flex-shrink-0"
           />
-          <div>
-            <div className="text-xs font-semibold text-slate-200">{record.guide?.name}</div>
-            <div className="text-[11px] text-slate-400">{record.guide?.email}</div>
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-slate-200 truncate">{record.guide?.name}</div>
+            <div className="text-[11px] text-slate-400 truncate">{record.guide?.email}</div>
           </div>
         </div>
       ),
@@ -326,6 +328,7 @@ export const AdminExperiences: React.FC = () => {
     {
       title: 'Narxi',
       key: 'price',
+      width: 90,
       render: (_: any, record: any) => (
         <div className="font-bold text-emerald-400">
           ${Number(record.priceUsd || record.price).toLocaleString()}
@@ -335,6 +338,7 @@ export const AdminExperiences: React.FC = () => {
     {
       title: 'Buyurtmalar',
       key: 'bookings',
+      width: 140,
       render: (_: any, record: any) => (
         <Tag color="blue">{record._count?.bookings || 0} ta buyurtma</Tag>
       ),
@@ -342,6 +346,7 @@ export const AdminExperiences: React.FC = () => {
     {
       title: 'Holati',
       key: 'isActive',
+      width: 110,
       render: (_: any, record: any) => (
         <Switch
           checkedChildren="Faol"
@@ -357,13 +362,15 @@ export const AdminExperiences: React.FC = () => {
     {
       title: 'Amallar',
       key: 'actions',
+      width: 240,
+      fixed: 'right' as const,
       render: (_: any, record: any) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <Button
             size="small"
             icon={<CalendarOutlined />}
             onClick={() => setDatesModalExp(record)}
-            className="bg-slate-800 text-amber-400 border-slate-700 hover:text-amber-300 hover:border-amber-500"
+            className="bg-slate-800 text-amber-400 border-slate-700 hover:text-amber-300 hover:border-amber-500 text-xs font-medium"
           >
             Sanalar ({record.availableDates?.length ?? record._count?.availableDates ?? 0})
           </Button>
@@ -371,7 +378,7 @@ export const AdminExperiences: React.FC = () => {
             size="small"
             icon={<EyeOutlined />}
             onClick={() => setSelectedExp(record)}
-            className="bg-slate-800 text-sky-400 border-slate-700 hover:text-sky-300 hover:border-sky-500"
+            className="bg-slate-800 text-sky-400 border-slate-700 hover:text-sky-300 hover:border-sky-500 text-xs font-medium"
           >
             Ko'rish
           </Button>
@@ -462,6 +469,7 @@ export const AdminExperiences: React.FC = () => {
           columns={columns}
           rowKey="id"
           loading={isLoading}
+          scroll={{ x: 1050 }}
           pagination={{
             current: page,
             pageSize: 10,
