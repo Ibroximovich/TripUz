@@ -14,6 +14,10 @@ import {
   Divider,
   Avatar,
   Image,
+  Form,
+  InputNumber,
+  Tabs,
+  Upload,
 } from 'antd';
 import {
   CompassOutlined,
@@ -28,8 +32,19 @@ import {
   GlobalOutlined,
   CheckCircleOutlined,
   ExportOutlined,
+  PlusOutlined,
+  UploadOutlined,
+  CloseOutlined,
+  PictureOutlined,
 } from '@ant-design/icons';
-import { getAdminExperiences, updateExperienceStatus, deleteExperience } from '../../services/admin.api';
+import {
+  getAdminExperiences,
+  updateExperienceStatus,
+  deleteExperience,
+  createAdminExperience,
+  getAdminGuides,
+} from '../../services/admin.api';
+import { uploadExperienceImages } from '../../services/guide.api';
 
 export const AdminExperiences: React.FC = () => {
   const queryClient = useQueryClient();
@@ -79,6 +94,111 @@ export const AdminExperiences: React.FC = () => {
       message.error('Turni o\'chirishda xatolik yuz berdi');
     },
   });
+
+  // States for creating tour on behalf of guide
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createForm] = Form.useForm();
+  const [submittingTour, setSubmittingTour] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [customImageUrl, setCustomImageUrl] = useState('');
+
+  // Fetch guides list for selection dropdown
+  const { data: guidesData } = useQuery({
+    queryKey: ['admin-guides-for-select'],
+    queryFn: () => getAdminGuides({ limit: 100 }),
+  });
+  const guidesList = guidesData?.data || [];
+
+  const handleUploadImage = async (file: File) => {
+    if (imageUrls.length >= 5) {
+      message.warning("Ko'pi bilan 5 ta rasm yuklash mumkin");
+      return false;
+    }
+    setUploadingImages(true);
+    try {
+      const res = await uploadExperienceImages([file]);
+      if (res.success && res.data?.urls?.[0]) {
+        setImageUrls((prev) => [...prev, res.data!.urls[0]]);
+        message.success("Rasm yuklandi!");
+      } else {
+        throw new Error(res.message || "Rasm yuklashda xatolik");
+      }
+    } catch (err: any) {
+      message.error(err.message || "Rasm yuklashda xatolik yuz berdi");
+    } finally {
+      setUploadingImages(false);
+    }
+    return false;
+  };
+
+  const handleAddCustomImageUrl = () => {
+    if (!customImageUrl.trim()) return;
+    if (imageUrls.length >= 5) {
+      message.warning("Ko'pi bilan 5 ta rasm yuklash mumkin");
+      return;
+    }
+    setImageUrls((prev) => [...prev, customImageUrl.trim()]);
+    setCustomImageUrl('');
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCreateExperience = async (values: any) => {
+    if (imageUrls.length === 0) {
+      message.error("Kamida 1 ta rasm yuklanishi shart!");
+      return;
+    }
+    setSubmittingTour(true);
+    try {
+      const mainTitle = values.title_uz || values.title_en || values.title_ru || '';
+      const mainDesc = values.description_uz || values.description_en || values.description_ru || '';
+      const mainMp = values.meetingPointText_uz || values.meetingPointText_en || values.meetingPointText_ru || values.meetingPoint || '';
+
+      const payload = {
+        guideId: values.guideId,
+        title: mainTitle,
+        title_uz: values.title_uz || mainTitle,
+        title_en: values.title_en || mainTitle,
+        title_ru: values.title_ru || mainTitle,
+        description: mainDesc,
+        description_uz: values.description_uz || mainDesc,
+        description_en: values.description_en || mainDesc,
+        description_ru: values.description_ru || mainDesc,
+        city: values.city || 'Samarqand',
+        priceUsd: Number(values.priceUsd),
+        price: Number(values.priceUsd),
+        durationHours: Number(values.durationHours) || 3,
+        duration: `${Number(values.durationHours) || 3} soat`,
+        meetingPoint: mainMp,
+        meetingPointText: mainMp,
+        meetingPointText_uz: values.meetingPointText_uz || mainMp,
+        meetingPointText_en: values.meetingPointText_en || mainMp,
+        meetingPointText_ru: values.meetingPointText_ru || mainMp,
+        meetingPointMapUrl: values.meetingPointMapUrl || '',
+        languages: values.languages && values.languages.length > 0 ? values.languages : ["O'zbekcha"],
+        images: imageUrls,
+      };
+
+      const res = await createAdminExperience(payload);
+      if (res.success) {
+        message.success("Tur muvaffaqiyatli yaratildi va tanlangan gid kabinetiga biriktirildi!");
+        setIsCreateModalOpen(false);
+        createForm.resetFields();
+        setImageUrls([]);
+        queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+        refetch();
+      }
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || err.message || "Turni yaratishda xatolik yuz berdi";
+      message.error(errorMsg);
+    } finally {
+      setSubmittingTour(false);
+    }
+  };
 
   const columns = [
     {
@@ -189,6 +309,19 @@ export const AdminExperiences: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              createForm.resetFields();
+              setImageUrls([]);
+              setIsCreateModalOpen(true);
+            }}
+            className="bg-[#C2703D] hover:bg-[#A85B2D] border-none font-bold rounded-xl shadow-lg"
+          >
+            Gid nomidan tur qo'shish
+          </Button>
+
           <Select
             placeholder="Shahar"
             allowClear
@@ -402,6 +535,291 @@ export const AdminExperiences: React.FC = () => {
             )}
           </div>
         )}
+      </Modal>
+
+      {/* Gid nomidan tur qo'shish modali */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 text-white font-bold text-lg border-b border-slate-800 pb-3">
+            <PlusOutlined className="text-amber-400" />
+            <span>Gid Nomidan Yangi Tur Qo'shish</span>
+          </div>
+        }
+        open={isCreateModalOpen}
+        onCancel={() => !submittingTour && setIsCreateModalOpen(false)}
+        footer={null}
+        width={800}
+        centered
+        className="dark-modal"
+        destroyOnClose
+      >
+        <Form
+          form={createForm}
+          layout="vertical"
+          onFinish={handleCreateExperience}
+          initialValues={{
+            city: 'Samarqand',
+            durationHours: 3,
+            priceUsd: 30,
+            languages: ["O'zbekcha"],
+          }}
+          className="pt-2 max-h-[75vh] overflow-y-auto pr-2 space-y-4"
+        >
+          {/* Gidni tanlash (Majburiy) */}
+          <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800">
+            <Form.Item
+              name="guideId"
+              label={
+                <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">
+                  * Ushbu tur qaysi gid nomidan yaratilsin? (Gidni tanlang)
+                </span>
+              }
+              rules={[{ required: true, message: 'Iltimos, gidni tanlang!' }]}
+              className="mb-0"
+            >
+              <Select
+                showSearch
+                placeholder="Gidni ismi, telefoni yoki emaili orqali qidiring..."
+                optionFilterProp="label"
+                className="w-full"
+                options={guidesList.map((g) => ({
+                  value: g.id,
+                  label: `${g.name} ${g.phone ? `(${g.phone})` : ''} - ${g.email}`,
+                }))}
+              />
+            </Form.Item>
+          </div>
+
+          {/* Umumiy ma'lumotlar: Shahar, Narx, Davomiylik, Tillar */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Form.Item
+              name="city"
+              label={<span className="text-slate-300 text-xs font-semibold">Shahar</span>}
+              rules={[{ required: true, message: 'Shaharni tanlang!' }]}
+            >
+              <Select
+                options={[
+                  { label: 'Samarqand', value: 'Samarqand' },
+                  { label: 'Buxoro', value: 'Buxoro' },
+                  { label: 'Xiva', value: 'Xiva' },
+                  { label: 'Toshkent', value: 'Toshkent' },
+                  { label: 'Shahrisabz', value: 'Shahrisabz' },
+                ]}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="priceUsd"
+              label={<span className="text-slate-300 text-xs font-semibold">Narxi ($ USD bir kishi uchun)</span>}
+              rules={[{ required: true, message: 'Narxni kiriting!' }]}
+            >
+              <InputNumber min={1} max={10000} prefix="$" className="w-full" />
+            </Form.Item>
+
+            <Form.Item
+              name="durationHours"
+              label={<span className="text-slate-300 text-xs font-semibold">Davomiyligi (soat)</span>}
+              rules={[{ required: true, message: 'Davomiylikni kiriting!' }]}
+            >
+              <InputNumber min={0.5} max={72} step={0.5} suffix="soat" className="w-full" />
+            </Form.Item>
+          </div>
+
+          <Form.Item
+            name="languages"
+            label={<span className="text-slate-300 text-xs font-semibold">Tur o'tkaziladigan tillar</span>}
+          >
+            <Select
+              mode="multiple"
+              placeholder="Tillar tanlang"
+              options={[
+                { label: "O'zbekcha", value: "O'zbekcha" },
+                { label: "English", value: "English" },
+                { label: "Русский", value: "Русский" },
+                { label: "Français", value: "Français" },
+                { label: "Deutsch", value: "Deutsch" },
+                { label: "Español", value: "Español" },
+                { label: "Türkçe", value: "Türkçe" },
+              ]}
+            />
+          </Form.Item>
+
+          {/* Multilingual Tabs for Title and Description */}
+          <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800">
+            <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+              Tur Nomi va Tavsifi (Ko'p tillilik)
+            </div>
+            <Tabs
+              defaultActiveKey="uz"
+              items={[
+                {
+                  key: 'uz',
+                  label: "🇺🇿 O'zbekcha",
+                  children: (
+                    <div className="space-y-3 pt-2">
+                      <Form.Item
+                        name="title_uz"
+                        label={<span className="text-slate-300 text-xs">Tur nomi (O'zbekcha)</span>}
+                        rules={[{ required: true, message: "Tur nomi kiritilishi shart" }]}
+                      >
+                        <Input placeholder="Masalan: Samarqand bo'ylab tarixiy sayohat" />
+                      </Form.Item>
+                      <Form.Item
+                        name="description_uz"
+                        label={<span className="text-slate-300 text-xs">Tur tavsifi (O'zbekcha)</span>}
+                        rules={[{ required: true, message: "Tavsif kiritilishi shart" }]}
+                      >
+                        <Input.TextArea rows={3} placeholder="Tur haqida batafsil ma'lumot..." />
+                      </Form.Item>
+                      <Form.Item
+                        name="meetingPointText_uz"
+                        label={<span className="text-slate-300 text-xs">Uchrashuv joyi (O'zbekcha)</span>}
+                        rules={[{ required: true, message: "Uchrashuv joyi kiritilishi shart" }]}
+                      >
+                        <Input placeholder="Masalan: Registon maydoni bosh kirish qismi" />
+                      </Form.Item>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'en',
+                  label: "🇬🇧 English",
+                  children: (
+                    <div className="space-y-3 pt-2">
+                      <Form.Item
+                        name="title_en"
+                        label={<span className="text-slate-300 text-xs">Tour Title (English)</span>}
+                      >
+                        <Input placeholder="e.g.: Historical Walking Tour in Samarkand" />
+                      </Form.Item>
+                      <Form.Item
+                        name="description_en"
+                        label={<span className="text-slate-300 text-xs">Tour Description (English)</span>}
+                      >
+                        <Input.TextArea rows={3} placeholder="Detailed tour overview for international tourists..." />
+                      </Form.Item>
+                      <Form.Item
+                        name="meetingPointText_en"
+                        label={<span className="text-slate-300 text-xs">Meeting Point (English)</span>}
+                      >
+                        <Input placeholder="e.g.: Registan Square main entrance" />
+                      </Form.Item>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'ru',
+                  label: "🇷🇺 Русский",
+                  children: (
+                    <div className="space-y-3 pt-2">
+                      <Form.Item
+                        name="title_ru"
+                        label={<span className="text-slate-300 text-xs">Название тура (Русский)</span>}
+                      >
+                        <Input placeholder="Например: Историческая прогулка по Самарканду" />
+                      </Form.Item>
+                      <Form.Item
+                        name="description_ru"
+                        label={<span className="text-slate-300 text-xs">Описание тура (Русский)</span>}
+                      >
+                        <Input.TextArea rows={3} placeholder="Подробное описание программы тура..." />
+                      </Form.Item>
+                      <Form.Item
+                        name="meetingPointText_ru"
+                        label={<span className="text-slate-300 text-xs">Место встречи (Русский)</span>}
+                      >
+                        <Input placeholder="Например: Главный вход на площадь Регистан" />
+                      </Form.Item>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </div>
+
+          {/* Google Maps link */}
+          <Form.Item
+            name="meetingPointMapUrl"
+            label={<span className="text-slate-300 text-xs">Google Maps havolasi (ixtiyoriy)</span>}
+          >
+            <Input placeholder="https://maps.google.com/?q=..." />
+          </Form.Item>
+
+          {/* Rasmlar yuklash */}
+          <div className="p-4 bg-slate-900/40 rounded-xl border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                Tur Rasmlari ({imageUrls.length} / 5) *
+              </span>
+              {uploadingImages && <span className="text-xs text-amber-400 animate-pulse">Yuklanmoqda...</span>}
+            </div>
+
+            {/* Uploaded Thumbnails */}
+            {imageUrls.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {imageUrls.map((url, idx) => (
+                  <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-700 h-20">
+                    <img src={url} alt={`upload-${idx}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute top-1 right-1 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded-full text-xs transition"
+                    >
+                      <CloseOutlined />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {imageUrls.length < 5 && (
+              <div className="space-y-2 pt-2">
+                <Upload
+                  beforeUpload={handleUploadImage}
+                  showUploadList={false}
+                  accept="image/*"
+                  disabled={uploadingImages}
+                >
+                  <Button icon={<UploadOutlined />} loading={uploadingImages} className="bg-slate-800 text-slate-200 border-slate-700">
+                    Kompyuterdan rasm yuklash
+                  </Button>
+                </Upload>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <Input
+                    placeholder="Yoki rasm URL manzilini kiriting..."
+                    value={customImageUrl}
+                    onChange={(e) => setCustomImageUrl(e.target.value)}
+                    onPressEnter={handleAddCustomImageUrl}
+                    size="small"
+                  />
+                  <Button size="small" onClick={handleAddCustomImageUrl} className="bg-slate-800 text-slate-200 border-slate-700">
+                    Qo'shish
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <Button
+              onClick={() => setIsCreateModalOpen(false)}
+              disabled={submittingTour}
+              className="bg-slate-800 text-slate-300 border-slate-700"
+            >
+              Bekor qilish
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={submittingTour}
+              className="bg-[#C2703D] hover:bg-[#A85B2D] border-none font-bold text-white shadow-lg"
+            >
+              Turni yaratish va Gidga biriktirish
+            </Button>
+          </div>
+        </Form>
       </Modal>
     </div>
   );

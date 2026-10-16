@@ -128,6 +128,14 @@ export async function deleteExperience(id: string) {
   return res.data;
 }
 
+export async function createAdminExperience(data: any) {
+  const res = await api.post<{ success: boolean; message: string; data: any }>(
+    '/admin/experiences',
+    data
+  );
+  return res.data;
+}
+
 // 4. Bookings
 export async function getAdminBookings(params?: AdminBookingsQuery) {
   const res = await api.get<{

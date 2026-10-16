@@ -529,6 +529,18 @@ export async function getCommissionReport(): Promise<CommissionReport[]> {
 }
 
 export async function adminCreateExperience(data: CreateExperienceDto) {
+  if (!data.guideId) {
+    throw new HttpError(400, "Gid tanlanishi shart (guideId)");
+  }
+
+  const guide = await prisma.user.findUnique({
+    where: { id: data.guideId },
+  });
+
+  if (!guide) {
+    throw new HttpError(404, "Tanlangan gid topilmadi");
+  }
+
   return createExpService(data);
 }
 

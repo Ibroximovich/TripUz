@@ -183,10 +183,28 @@ export async function createExperience(data: CreateExperienceDto) {
   const priceUsd = data.priceUsd || data.price || 0;
   const durationHours = data.durationHours || 3;
 
+  const title_uz = data.title_uz || data.title;
+  const title_en = data.title_en || title_uz || data.title;
+  const title_ru = data.title_ru || title_uz || data.title;
+
+  const description_uz = data.description_uz || data.description;
+  const description_en = data.description_en || description_uz || data.description;
+  const description_ru = data.description_ru || description_uz || data.description;
+
+  const meetingPointText_uz = data.meetingPointText_uz || data.meetingPointText || data.meetingPoint;
+  const meetingPointText_en = data.meetingPointText_en || meetingPointText_uz || data.meetingPointText || data.meetingPoint;
+  const meetingPointText_ru = data.meetingPointText_ru || meetingPointText_uz || data.meetingPointText || data.meetingPoint;
+
   const experience = await prisma.experience.create({
     data: {
       title: data.title,
+      title_uz,
+      title_en,
+      title_ru,
       description: data.description,
+      description_uz,
+      description_en,
+      description_ru,
       city: data.city || 'Samarqand',
       price: priceUsd,
       priceUsd: priceUsd,
@@ -194,6 +212,11 @@ export async function createExperience(data: CreateExperienceDto) {
       durationHours: durationHours,
       duration: `${durationHours} soat`,
       meetingPoint: data.meetingPoint,
+      meetingPointText: data.meetingPointText || data.meetingPoint,
+      meetingPointText_uz,
+      meetingPointText_en,
+      meetingPointText_ru,
+      meetingPointMapUrl: data.meetingPointMapUrl || null,
       guideId: data.guideId || 'admin-id',
       images: (data.images || []) as any,
       languages: (data.languages || ["O'zbekcha"]) as any,
@@ -211,7 +234,7 @@ export async function createExperience(data: CreateExperienceDto) {
     },
     include: {
       availableDates: true,
-      guide: { select: { id: true, name: true, avatar: true } },
+      guide: { select: { id: true, name: true, avatar: true, phone: true, telegramHandle: true } },
     },
   });
 
