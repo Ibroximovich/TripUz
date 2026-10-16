@@ -545,6 +545,8 @@ export async function adminCreateExperience(data: CreateExperienceDto) {
           name: (data as any).newGuideName.trim(),
           phone: (data as any).newGuidePhone?.trim() || null,
           telegramHandle: (data as any).newGuideTelegram?.trim() || null,
+          avatar: (data as any).newGuideAvatar?.trim() || null,
+          isCustomAvatarUploaded: !!(data as any).newGuideAvatar,
           role: 'GUIDE',
         },
       });
@@ -556,6 +558,8 @@ export async function adminCreateExperience(data: CreateExperienceDto) {
           role: 'GUIDE',
           phone: (data as any).newGuidePhone?.trim() || guideUser.phone,
           telegramHandle: (data as any).newGuideTelegram?.trim() || guideUser.telegramHandle,
+          avatar: (data as any).newGuideAvatar?.trim() || guideUser.avatar,
+          isCustomAvatarUploaded: (data as any).newGuideAvatar ? true : guideUser.isCustomAvatarUploaded,
         },
       });
     }

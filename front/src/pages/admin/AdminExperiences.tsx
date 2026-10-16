@@ -105,6 +105,8 @@ export const AdminExperiences: React.FC = () => {
   const [customImageUrl, setCustomImageUrl] = useState('');
 
   const [guideMode, setGuideMode] = useState<'existing' | 'new'>('existing');
+  const [newGuideAvatarUrl, setNewGuideAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Fetch guides list for selection dropdown
   const { data: guidesData } = useQuery({
@@ -191,6 +193,7 @@ export const AdminExperiences: React.FC = () => {
         payload.newGuideEmail = values.newGuideEmail;
         payload.newGuidePhone = values.newGuidePhone;
         payload.newGuideTelegram = values.newGuideTelegram;
+        if (newGuideAvatarUrl) payload.newGuideAvatar = newGuideAvatarUrl;
       }
 
       const res = await createAdminExperience(payload);
@@ -203,6 +206,7 @@ export const AdminExperiences: React.FC = () => {
         setIsCreateModalOpen(false);
         createForm.resetFields();
         setImageUrls([]);
+        setNewGuideAvatarUrl(null);
         queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
         queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
         refetch();
@@ -619,6 +623,52 @@ export const AdminExperiences: React.FC = () => {
                 <div className="text-xs text-slate-400">
                   Gid hali saytda ro'yxatdan o'tmagan bo'lsa, ma'lumotlarini kiriting. Tizim unga avtomatik profil ochadi va turni unga biriktiradi.
                 </div>
+
+                {/* Gid Profil Rasmi */}
+                <div className="flex items-center gap-4 p-3 bg-slate-900/50 rounded-xl border border-slate-800">
+                  <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-dashed border-slate-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {newGuideAvatarUrl ? (
+                      <img src={newGuideAvatarUrl} alt="Gid rasmi" className="w-full h-full object-cover" />
+                    ) : (
+                      <UserOutlined className="text-2xl text-slate-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <div className="text-xs font-semibold text-slate-300">Gidning Profil Rasmi (ixtiyoriy)</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Upload
+                        beforeUpload={async (file) => {
+                          setUploadingAvatar(true);
+                          try {
+                            const res = await uploadExperienceImages([file as File]);
+                            if (res.success && res.data?.urls?.[0]) {
+                              setNewGuideAvatarUrl(res.data.urls[0]);
+                              message.success("Gid rasmi yuklandi!");
+                            }
+                          } catch {
+                            message.error("Rasm yuklashda xatolik");
+                          } finally {
+                            setUploadingAvatar(false);
+                          }
+                          return false;
+                        }}
+                        showUploadList={false}
+                        accept="image/*"
+                        disabled={uploadingAvatar}
+                      >
+                        <Button size="small" icon={<UploadOutlined />} loading={uploadingAvatar} className="bg-slate-800 text-slate-200 border-slate-700 text-xs">
+                          Rasm yuklash
+                        </Button>
+                      </Upload>
+                      {newGuideAvatarUrl && (
+                        <Button size="small" type="text" danger onClick={() => setNewGuideAvatarUrl(null)} className="text-xs">
+                          O'chirish
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Form.Item
                     name="newGuideName"
