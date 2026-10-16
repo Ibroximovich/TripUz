@@ -41,6 +41,7 @@ export const createGuideExperienceSchema = z.object({
   newGuideEmail: z.string().email().optional().or(z.literal('')),
   newGuidePhone: z.string().optional(),
   newGuideTelegram: z.string().optional(),
+  newGuideAvatar: z.string().optional(),
   availableDates: z
     .array(
       z.object({
