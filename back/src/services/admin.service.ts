@@ -279,6 +279,9 @@ export async function getAdminExperiences(query: AdminExperiencesQuery) {
             avatar: true,
           },
         },
+        availableDates: {
+          orderBy: { date: 'asc' },
+        },
         _count: {
           select: {
             bookings: true,
@@ -666,4 +669,28 @@ export async function getReferralStats() {
       commissionRate: hotelCommissionRate,
     };
   });
+}
+
+/**
+ * 6. TURLARGA SANA QO'SHISH VA O'CHIRISH (ADMIN)
+ */
+export async function adminAddExperienceDate(experienceId: string, data: { date: Date | string; slots?: number; maxCapacity?: number }) {
+  const capacity = Number(data.maxCapacity || data.slots || 10);
+  const created = await prisma.availableDate.create({
+    data: {
+      experienceId,
+      date: new Date(data.date),
+      slots: capacity,
+      maxCapacity: capacity,
+      bookedCount: 0,
+    },
+  });
+  return created;
+}
+
+export async function adminDeleteExperienceDate(dateId: string) {
+  await prisma.availableDate.delete({
+    where: { id: dateId },
+  });
+  return { success: true };
 }

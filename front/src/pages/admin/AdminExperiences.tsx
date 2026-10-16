@@ -19,6 +19,7 @@ import {
   Tabs,
   Upload,
   Radio,
+  DatePicker,
 } from 'antd';
 import {
   CompassOutlined,
@@ -37,13 +38,17 @@ import {
   UploadOutlined,
   CloseOutlined,
   PictureOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import {
   getAdminExperiences,
   updateExperienceStatus,
   deleteExperience,
   createAdminExperience,
   getAdminGuides,
+  addExperienceDate,
+  deleteExperienceDate,
 } from '../../services/admin.api';
 import { uploadExperienceImages } from '../../services/guide.api';
 
@@ -107,6 +112,74 @@ export const AdminExperiences: React.FC = () => {
   const [guideMode, setGuideMode] = useState<'existing' | 'new'>('existing');
   const [newGuideAvatarUrl, setNewGuideAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // States for date management
+  const [datesModalExp, setDatesModalExp] = useState<any | null>(null);
+  const [selectedNewDate, setSelectedNewDate] = useState<dayjs.Dayjs | null>(null);
+  const [newDateCapacity, setNewDateCapacity] = useState<number>(10);
+  const [addingDate, setAddingDate] = useState(false);
+
+  const handleAddDate = async (expId: string) => {
+    if (!selectedNewDate) {
+      message.warning("Iltimos, sanani tanlang!");
+      return;
+    }
+    setAddingDate(true);
+    try {
+      const res = await addExperienceDate(expId, {
+        date: selectedNewDate.toISOString(),
+        maxCapacity: newDateCapacity,
+        slots: newDateCapacity,
+      });
+      if (res.success) {
+        message.success("Yangi sana muvaffaqiyatli qo'shildi!");
+        setSelectedNewDate(null);
+        queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
+
+        if (datesModalExp && datesModalExp.id === expId) {
+          setDatesModalExp((prev: any) => ({
+            ...prev,
+            availableDates: [...(prev.availableDates || []), res.data],
+          }));
+        }
+        if (selectedExp && selectedExp.id === expId) {
+          setSelectedExp((prev: any) => ({
+            ...prev,
+            availableDates: [...(prev.availableDates || []), res.data],
+          }));
+        }
+      }
+    } catch (err: any) {
+      message.error(err.response?.data?.message || "Sana qo'shishda xatolik yuz berdi");
+    } finally {
+      setAddingDate(false);
+    }
+  };
+
+  const handleDeleteDate = async (expId: string, dateId: string) => {
+    try {
+      const res = await deleteExperienceDate(dateId);
+      if (res.success) {
+        message.success("Sana muvaffaqiyatli o'chirildi");
+        queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
+
+        if (datesModalExp && datesModalExp.id === expId) {
+          setDatesModalExp((prev: any) => ({
+            ...prev,
+            availableDates: (prev.availableDates || []).filter((d: any) => d.id !== dateId),
+          }));
+        }
+        if (selectedExp && selectedExp.id === expId) {
+          setSelectedExp((prev: any) => ({
+            ...prev,
+            availableDates: (prev.availableDates || []).filter((d: any) => d.id !== dateId),
+          }));
+        }
+      }
+    } catch (err: any) {
+      message.error("Sanani o'chirishda xatolik yuz berdi");
+    }
+  };
 
   // Fetch guides list for selection dropdown
   const { data: guidesData } = useQuery({
@@ -286,6 +359,14 @@ export const AdminExperiences: React.FC = () => {
       key: 'actions',
       render: (_: any, record: any) => (
         <div className="flex items-center gap-2">
+          <Button
+            size="small"
+            icon={<CalendarOutlined />}
+            onClick={() => setDatesModalExp(record)}
+            className="bg-slate-800 text-amber-400 border-slate-700 hover:text-amber-300 hover:border-amber-500"
+          >
+            Sanalar ({record.availableDates?.length ?? record._count?.availableDates ?? 0})
+          </Button>
           <Button
             size="small"
             icon={<EyeOutlined />}
@@ -552,6 +633,212 @@ export const AdminExperiences: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Sanalar va bandliklar bo'limi */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span className="text-sm font-bold text-white flex items-center gap-2">
+                  <CalendarOutlined className="text-amber-400" /> Mavjud Sanalar va Bo'sh Joylar
+                </span>
+                <span className="text-xs text-slate-400">
+                  Jami: {selectedExp.availableDates?.length || 0} ta sana
+                </span>
+              </div>
+
+              {/* Yangi sana qo'shish formasi */}
+              <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80 flex flex-wrap items-center gap-3">
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="Yangi sana va vaqt"
+                  value={selectedNewDate}
+                  onChange={(val) => setSelectedNewDate(val)}
+                  disabledDate={(current) => current && current < dayjs().startOf('day')}
+                  className="w-52"
+                />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-400">Joy:</span>
+                  <InputNumber
+                    min={1}
+                    max={100}
+                    value={newDateCapacity}
+                    onChange={(val) => setNewDateCapacity(val || 10)}
+                    className="w-20"
+                  />
+                </div>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => handleAddDate(selectedExp.id)}
+                  loading={addingDate}
+                  className="bg-amber-600 hover:bg-amber-500 border-none text-xs"
+                >
+                  Sana qo'shish
+                </Button>
+              </div>
+
+              {/* Mavjud sanalar ro'yxati */}
+              {selectedExp.availableDates && selectedExp.availableDates.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                  {selectedExp.availableDates.map((d: any) => (
+                    <div
+                      key={d.id}
+                      className="flex items-center justify-between p-2.5 bg-slate-800/40 border border-slate-700/50 rounded-lg"
+                    >
+                      <div>
+                        <div className="text-xs font-semibold text-slate-200">
+                          {dayjs(d.date).format('DD.MM.YYYY, HH:mm')}
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          Joylar: <span className="text-emerald-400 font-medium">{d.slots - (d.bookedCount || 0)}</span> / {d.maxCapacity || d.slots} ta
+                        </div>
+                      </div>
+                      <Popconfirm
+                        title="Sanani o'chirish"
+                        description="Haqiqatan ham ushbu sanani o'chirmoqchimisiz?"
+                        okText="O'chirish"
+                        cancelText="Bekor qilish"
+                        okType="danger"
+                        onConfirm={() => handleDeleteDate(selectedExp.id, d.id)}
+                      >
+                        <Button
+                          size="small"
+                          danger
+                          type="text"
+                          icon={<DeleteOutlined />}
+                          className="hover:bg-rose-500/20 text-xs"
+                        />
+                      </Popconfirm>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-slate-400 italic text-center py-2">
+                  Ushbu turda hozircha sanalar mavjud emas. Yuqoridagi forma orqali yangi sana qo'shing.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* SANALAR BOSHQARUVI MODALI (JADVALDAN TEZKOR OCHISH) */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 text-white font-bold text-base border-b border-slate-800 pb-3">
+            <CalendarOutlined className="text-amber-400" />
+            <span>Turni Sanalari va Joylarini Boshqarish</span>
+          </div>
+        }
+        open={!!datesModalExp}
+        onCancel={() => {
+          setDatesModalExp(null);
+          setSelectedNewDate(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => { setDatesModalExp(null); setSelectedNewDate(null); }}>
+            Yopish
+          </Button>,
+        ]}
+        width={600}
+        centered
+        className="dark-modal"
+      >
+        {datesModalExp && (
+          <div className="space-y-4 pt-2">
+            <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <div className="text-sm font-bold text-white">{datesModalExp.title}</div>
+                <div className="text-xs text-amber-400">{datesModalExp.city} • ${Number(datesModalExp.priceUsd || datesModalExp.price)}</div>
+              </div>
+              <Tag color="cyan">{datesModalExp.availableDates?.length || 0} ta sana</Tag>
+            </div>
+
+            {/* Yangi sana qo'shish */}
+            <div className="p-3.5 bg-slate-950/70 rounded-xl border border-slate-800 space-y-2">
+              <div className="text-xs font-semibold text-slate-300">Yangi Ekskursiya Sanasini Qo'shish</div>
+              <div className="flex flex-wrap items-center gap-3">
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="Sana va vaqtni tanlang"
+                  value={selectedNewDate}
+                  onChange={(val) => setSelectedNewDate(val)}
+                  disabledDate={(current) => current && current < dayjs().startOf('day')}
+                  className="flex-1 min-w-[200px]"
+                />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-400">Maks. joy:</span>
+                  <InputNumber
+                    min={1}
+                    max={100}
+                    value={newDateCapacity}
+                    onChange={(val) => setNewDateCapacity(val || 10)}
+                    className="w-20"
+                  />
+                </div>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => handleAddDate(datesModalExp.id)}
+                  loading={addingDate}
+                  className="bg-amber-600 hover:bg-amber-500 border-none"
+                >
+                  Qo'shish
+                </Button>
+              </div>
+            </div>
+
+            {/* Ro'yxat */}
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Mavjud Sanalar Ro'yxati ({datesModalExp.availableDates?.length || 0})
+              </div>
+              {datesModalExp.availableDates && datesModalExp.availableDates.length > 0 ? (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {datesModalExp.availableDates.map((d: any) => (
+                    <div
+                      key={d.id}
+                      className="flex items-center justify-between p-3 bg-slate-900/60 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                          <CalendarOutlined />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-white">
+                            {dayjs(d.date).format('DD-MMMM, YYYY — HH:mm')}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            Bo'sh joylar: <span className="text-emerald-400 font-bold">{d.slots - (d.bookedCount || 0)}</span> ta / jami {d.maxCapacity || d.slots} ta
+                          </div>
+                        </div>
+                      </div>
+                      <Popconfirm
+                        title="Sanani o'chirish"
+                        description="Haqiqatan ham ushbu sanani o'chirmoqchimisiz?"
+                        okText="O'chirish"
+                        cancelText="Bekor qilish"
+                        okType="danger"
+                        onConfirm={() => handleDeleteDate(datesModalExp.id, d.id)}
+                      >
+                        <Button
+                          size="small"
+                          danger
+                          type="text"
+                          icon={<DeleteOutlined />}
+                          className="hover:bg-rose-500/20"
+                        />
+                      </Popconfirm>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-slate-400 italic text-center py-6 bg-slate-900/30 rounded-xl border border-slate-800/60">
+                  Ushbu turda hozircha sanalar mavjud emas. Yuqoridagi orqali yangi sana qo'shing.
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Modal>

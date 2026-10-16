@@ -136,6 +136,21 @@ export async function createAdminExperience(data: any) {
   return res.data;
 }
 
+export async function addExperienceDate(experienceId: string, data: { date: string; slots?: number; maxCapacity?: number }) {
+  const res = await api.post<{ success: boolean; message: string; data: any }>(
+    `/admin/experiences/${experienceId}/dates`,
+    data
+  );
+  return res.data;
+}
+
+export async function deleteExperienceDate(dateId: string) {
+  const res = await api.delete<{ success: boolean; message: string }>(
+    `/admin/experiences/dates/${dateId}`
+  );
+  return res.data;
+}
+
 // 4. Bookings
 export async function getAdminBookings(params?: AdminBookingsQuery) {
   const res = await api.get<{

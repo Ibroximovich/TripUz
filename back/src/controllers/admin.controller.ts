@@ -295,3 +295,41 @@ export async function getReferrals(req: Request, res: Response, next: NextFuncti
     next(error);
   }
 }
+
+/**
+ * POST /api/admin/experiences/:id/dates
+ * Add a new date/slot to an experience (admin)
+ */
+export async function addExperienceDate(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { id } = req.params;
+    const dto = req.body;
+    const dateSlot = await adminService.adminAddExperienceDate(id, dto);
+
+    res.status(201).json({
+      success: true,
+      message: 'Sana muvaffaqiyatli qo\'shildi',
+      data: dateSlot,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * DELETE /api/admin/experiences/dates/:dateId
+ * Delete a date slot (admin)
+ */
+export async function deleteExperienceDate(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { dateId } = req.params;
+    await adminService.adminDeleteExperienceDate(dateId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Sana muvaffaqiyatli o\'chirildi',
+    });
+  } catch (error) {
+    next(error);
+  }
+}

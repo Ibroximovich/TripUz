@@ -9,13 +9,15 @@ import {
   getAdminBookings,
   updateBookingStatus,
   createExperience,
+  addExperienceDate,
+  deleteExperienceDate,
   getCommissions,
   getReferrals,
 } from '../controllers/admin.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { requireRole } from '../middlewares/role.middleware';
 import { validate } from '../middlewares/validate.middleware';
-import { createExperienceSchema } from '../schemas/experience.schema';
+import { createExperienceSchema, addAvailableDateSchema } from '../schemas/experience.schema';
 
 const router = Router();
 
@@ -37,16 +39,20 @@ router.get('/guides', getAdminGuides);
 router.patch('/guides/:id', updateGuideCommission);
 
 /**
- * 3. TURLARNI MODERATSIYA QILISH
+ * 3. TURLARNI MODERATSIYA QILISH VA SANALAR BOSHQARUVI
  * GET /api/admin/experiences
  * POST /api/admin/experiences
  * PATCH /api/admin/experiences/:id/status
  * DELETE /api/admin/experiences/:id
+ * POST /api/admin/experiences/:id/dates
+ * DELETE /api/admin/experiences/dates/:dateId
  */
 router.get('/experiences', getAdminExperiences);
 router.post('/experiences', validate(createExperienceSchema), createExperience);
 router.patch('/experiences/:id/status', updateExperienceStatus);
 router.delete('/experiences/:id', deleteExperience);
+router.post('/experiences/:id/dates', validate(addAvailableDateSchema), addExperienceDate);
+router.delete('/experiences/dates/:dateId', deleteExperienceDate);
 
 /**
  * 4. BUYURTMALAR MONITORINGI
