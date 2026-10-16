@@ -541,31 +541,53 @@ export async function adminCreateExperience(data: CreateExperienceDto) {
 
     if (!guideUser) {
       console.log('[ADMIN] Creating new guide user for email:', email);
-      guideUser = await prisma.user.create({
-        data: {
-          email,
-          name: (data as any).newGuideName.trim(),
-          phone: (data as any).newGuidePhone?.trim() || null,
-          telegramHandle: (data as any).newGuideTelegram?.trim() || null,
-          avatar: (data as any).newGuideAvatar?.trim() || null,
-          isCustomAvatarUploaded: !!(data as any).newGuideAvatar,
-          role: 'GUIDE',
-        },
-      });
-      console.log('[ADMIN] New guide user created with id:', guideUser.id);
+      try {
+        guideUser = await prisma.user.create({
+          data: {
+            email,
+            name: ((data as any).newGuideName || 'Gid').trim(),
+            phone: (data as any).newGuidePhone?.trim() || null,
+            telegramHandle: (data as any).newGuideTelegram?.trim() || null,
+            avatar: (data as any).newGuideAvatar?.trim() || null,
+            role: 'GUIDE',
+          },
+        });
+        console.log('[ADMIN] New guide user created with id:', guideUser.id);
+      } catch (err: any) {
+        console.warn('[ADMIN] Initial user.create failed, falling back to minimal fields:', err?.message);
+        try {
+          guideUser = await prisma.user.create({
+            data: {
+              email,
+              name: ((data as any).newGuideName || 'Gid').trim(),
+              role: 'GUIDE',
+            },
+          });
+          console.log('[ADMIN] Minimal guide user created:', guideUser.id);
+        } catch (minimalErr: any) {
+          console.error('[ADMIN] Fatal: could not create guide user:', minimalErr?.message);
+          throw new HttpError(400, `Gid profilini yaratishda xatolik: ${minimalErr?.message}`);
+        }
+      }
     } else {
       console.log('[ADMIN] Found existing user for email:', email, 'updating to GUIDE');
-      // Agar foydalanuvchi allaqachon mavjud bo'lsa, rolini GUIDE qilamiz va ma'lumotlarini yangilaymiz
-      guideUser = await prisma.user.update({
-        where: { id: guideUser.id },
-        data: {
-          role: 'GUIDE',
-          phone: (data as any).newGuidePhone?.trim() || guideUser.phone,
-          telegramHandle: (data as any).newGuideTelegram?.trim() || guideUser.telegramHandle,
-          avatar: (data as any).newGuideAvatar?.trim() || guideUser.avatar,
-          isCustomAvatarUploaded: (data as any).newGuideAvatar ? true : guideUser.isCustomAvatarUploaded,
-        },
-      });
+      try {
+        guideUser = await prisma.user.update({
+          where: { id: guideUser.id },
+          data: {
+            role: 'GUIDE',
+            phone: (data as any).newGuidePhone?.trim() || guideUser.phone,
+            telegramHandle: (data as any).newGuideTelegram?.trim() || guideUser.telegramHandle,
+            avatar: (data as any).newGuideAvatar?.trim() || guideUser.avatar,
+          },
+        });
+      } catch (updateErr: any) {
+        console.warn('[ADMIN] Update failed, forcing role GUIDE only:', updateErr?.message);
+        guideUser = await prisma.user.update({
+          where: { id: guideUser.id },
+          data: { role: 'GUIDE' },
+        });
+      }
       console.log('[ADMIN] Existing guide user updated:', guideUser.id);
     }
 

@@ -202,28 +202,43 @@ export async function createExperience(data: CreateExperienceDto) {
     const email = (data as any).newGuideEmail.trim().toLowerCase();
     let guideUser = await prisma.user.findUnique({ where: { email } });
     if (!guideUser) {
-      guideUser = await prisma.user.create({
-        data: {
-          email,
-          name: (data as any).newGuideName?.trim() || 'Gid',
-          phone: (data as any).newGuidePhone?.trim() || null,
-          telegramHandle: (data as any).newGuideTelegram?.trim() || null,
-          avatar: (data as any).newGuideAvatar?.trim() || null,
-          isCustomAvatarUploaded: !!(data as any).newGuideAvatar,
-          role: 'GUIDE',
-        },
-      });
+      try {
+        guideUser = await prisma.user.create({
+          data: {
+            email,
+            name: ((data as any).newGuideName || 'Gid').trim(),
+            phone: (data as any).newGuidePhone?.trim() || null,
+            telegramHandle: (data as any).newGuideTelegram?.trim() || null,
+            avatar: (data as any).newGuideAvatar?.trim() || null,
+            role: 'GUIDE',
+          },
+        });
+      } catch (uErr) {
+        guideUser = await prisma.user.create({
+          data: {
+            email,
+            name: ((data as any).newGuideName || 'Gid').trim(),
+            role: 'GUIDE',
+          },
+        });
+      }
     } else {
-      guideUser = await prisma.user.update({
-        where: { id: guideUser.id },
-        data: {
-          role: 'GUIDE',
-          phone: (data as any).newGuidePhone?.trim() || guideUser.phone,
-          telegramHandle: (data as any).newGuideTelegram?.trim() || guideUser.telegramHandle,
-          avatar: (data as any).newGuideAvatar?.trim() || guideUser.avatar,
-          isCustomAvatarUploaded: (data as any).newGuideAvatar ? true : guideUser.isCustomAvatarUploaded,
-        },
-      });
+      try {
+        guideUser = await prisma.user.update({
+          where: { id: guideUser.id },
+          data: {
+            role: 'GUIDE',
+            phone: (data as any).newGuidePhone?.trim() || guideUser.phone,
+            telegramHandle: (data as any).newGuideTelegram?.trim() || guideUser.telegramHandle,
+            avatar: (data as any).newGuideAvatar?.trim() || guideUser.avatar,
+          },
+        });
+      } catch (upErr) {
+        guideUser = await prisma.user.update({
+          where: { id: guideUser.id },
+          data: { role: 'GUIDE' },
+        });
+      }
     }
     targetGuideId = guideUser.id;
   }
