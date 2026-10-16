@@ -529,18 +529,53 @@ export async function getCommissionReport(): Promise<CommissionReport[]> {
 }
 
 export async function adminCreateExperience(data: CreateExperienceDto) {
-  if (!data.guideId) {
-    throw new HttpError(400, "Gid tanlanishi shart (guideId)");
+  let targetGuideId = data.guideId;
+
+  // Agar mavjud gid tanlanmagan bo'lsa, lekin yangi gid ma'lumotlari berilgan bo'lsa
+  if (!targetGuideId && (data as any).newGuideName && (data as any).newGuideEmail) {
+    const email = (data as any).newGuideEmail.trim().toLowerCase();
+    let guideUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!guideUser) {
+      guideUser = await prisma.user.create({
+        data: {
+          email,
+          name: (data as any).newGuideName.trim(),
+          phone: (data as any).newGuidePhone?.trim() || null,
+          telegramHandle: (data as any).newGuideTelegram?.trim() || null,
+          role: 'GUIDE',
+        },
+      });
+    } else {
+      // Agar foydalanuvchi allaqachon mavjud bo'lsa, rolini GUIDE qilamiz va ma'lumotlarini yangilaymiz
+      guideUser = await prisma.user.update({
+        where: { id: guideUser.id },
+        data: {
+          role: 'GUIDE',
+          phone: (data as any).newGuidePhone?.trim() || guideUser.phone,
+          telegramHandle: (data as any).newGuideTelegram?.trim() || guideUser.telegramHandle,
+        },
+      });
+    }
+
+    targetGuideId = guideUser.id;
+  }
+
+  if (!targetGuideId) {
+    throw new HttpError(400, "Mavjud gid tanlanishi yoki yangi gid ma'lumotlari (ism va email) kiritilishi shart");
   }
 
   const guide = await prisma.user.findUnique({
-    where: { id: data.guideId },
+    where: { id: targetGuideId },
   });
 
   if (!guide) {
     throw new HttpError(404, "Tanlangan gid topilmadi");
   }
 
+  data.guideId = targetGuideId;
   return createExpService(data);
 }
 

@@ -37,6 +37,10 @@ export const createGuideExperienceSchema = z.object({
   languages: z.array(z.string()).min(1, "Kamida 1 ta til tanlanishi shart").default(["O'zbekcha"]),
   images: z.array(z.string()).min(1, "Kamida 1 ta rasm yuklanishi shart").max(5, "Ko'pi bilan 5 ta rasm yuklash mumkin"),
   guideId: z.string().optional(),
+  newGuideName: z.string().optional(),
+  newGuideEmail: z.string().email().optional().or(z.literal('')),
+  newGuidePhone: z.string().optional(),
+  newGuideTelegram: z.string().optional(),
   availableDates: z
     .array(
       z.object({

@@ -18,6 +18,7 @@ import {
   InputNumber,
   Tabs,
   Upload,
+  Radio,
 } from 'antd';
 import {
   CompassOutlined,
@@ -103,6 +104,8 @@ export const AdminExperiences: React.FC = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState('');
 
+  const [guideMode, setGuideMode] = useState<'existing' | 'new'>('existing');
+
   // Fetch guides list for selection dropdown
   const { data: guidesData } = useQuery({
     queryKey: ['admin-guides-for-select'],
@@ -157,8 +160,7 @@ export const AdminExperiences: React.FC = () => {
       const mainDesc = values.description_uz || values.description_en || values.description_ru || '';
       const mainMp = values.meetingPointText_uz || values.meetingPointText_en || values.meetingPointText_ru || values.meetingPoint || '';
 
-      const payload = {
-        guideId: values.guideId,
+      const payload: any = {
         title: mainTitle,
         title_uz: values.title_uz || mainTitle,
         title_en: values.title_en || mainTitle,
@@ -182,9 +184,22 @@ export const AdminExperiences: React.FC = () => {
         images: imageUrls,
       };
 
+      if (guideMode === 'existing') {
+        payload.guideId = values.guideId;
+      } else {
+        payload.newGuideName = values.newGuideName;
+        payload.newGuideEmail = values.newGuideEmail;
+        payload.newGuidePhone = values.newGuidePhone;
+        payload.newGuideTelegram = values.newGuideTelegram;
+      }
+
       const res = await createAdminExperience(payload);
       if (res.success) {
-        message.success("Tur muvaffaqiyatli yaratildi va tanlangan gid kabinetiga biriktirildi!");
+        message.success(
+          guideMode === 'new'
+            ? "Yangi gid yaratildi va tur muvaffaqiyatli unga biriktirildi!"
+            : "Tur muvaffaqiyatli yaratildi va tanlangan gid kabinetiga biriktirildi!"
+        );
         setIsCreateModalOpen(false);
         createForm.resetFields();
         setImageUrls([]);
@@ -565,29 +580,85 @@ export const AdminExperiences: React.FC = () => {
           }}
           className="pt-2 max-h-[75vh] overflow-y-auto pr-2 space-y-4"
         >
-          {/* Gidni tanlash (Majburiy) */}
-          <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800">
-            <Form.Item
-              name="guideId"
-              label={
-                <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">
-                  * Ushbu tur qaysi gid nomidan yaratilsin? (Gidni tanlang)
-                </span>
-              }
-              rules={[{ required: true, message: 'Iltimos, gidni tanlang!' }]}
-              className="mb-0"
-            >
-              <Select
-                showSearch
-                placeholder="Gidni ismi, telefoni yoki emaili orqali qidiring..."
-                optionFilterProp="label"
-                className="w-full"
-                options={guidesList.map((g) => ({
-                  value: g.id,
-                  label: `${g.name} ${g.phone ? `(${g.phone})` : ''} - ${g.email}`,
-                }))}
-              />
-            </Form.Item>
+          {/* Gidni tanlash yoki Yangi gid kiritish */}
+          <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
+              <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">
+                * Ushbu tur qaysi gid nomidan yaratilsin?
+              </span>
+              <Radio.Group
+                value={guideMode}
+                onChange={(e) => setGuideMode(e.target.value)}
+                size="small"
+                buttonStyle="solid"
+              >
+                <Radio.Button value="existing">Mavjud Gidlar Ro'yxatidan</Radio.Button>
+                <Radio.Button value="new">+ Yangi Gid Kiritish</Radio.Button>
+              </Radio.Group>
+            </div>
+
+            {guideMode === 'existing' ? (
+              <Form.Item
+                name="guideId"
+                rules={[{ required: guideMode === 'existing', message: 'Iltimos, gidni tanlang!' }]}
+                className="mb-0"
+              >
+                <Select
+                  showSearch
+                  placeholder="Gidni ismi, telefoni yoki emaili orqali qidiring..."
+                  optionFilterProp="label"
+                  className="w-full"
+                  options={guidesList.map((g) => ({
+                    value: g.id,
+                    label: `${g.name} ${g.phone ? `(${g.phone})` : ''} - ${g.email}`,
+                  }))}
+                />
+              </Form.Item>
+            ) : (
+              <div className="space-y-3 pt-1">
+                <div className="text-xs text-slate-400">
+                  Gid hali saytda ro'yxatdan o'tmagan bo'lsa, ma'lumotlarini kiriting. Tizim unga avtomatik profil ochadi va turni unga biriktiradi.
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Form.Item
+                    name="newGuideName"
+                    label={<span className="text-slate-300 text-xs">Gidning To'liq Ismi *</span>}
+                    rules={[{ required: guideMode === 'new', message: 'Gid ismini kiriting!' }]}
+                    className="mb-0"
+                  >
+                    <Input placeholder="Masalan: Sardor Rustamov" />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="newGuideEmail"
+                    label={<span className="text-slate-300 text-xs">Gidning Emaili *</span>}
+                    rules={[
+                      { required: guideMode === 'new', message: 'Email manzilini kiriting!' },
+                      { type: 'email', message: "To'g'ri email formatini kiriting!" },
+                    ]}
+                    className="mb-0"
+                  >
+                    <Input placeholder="Masalan: sardor.guide@gmail.com" />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="newGuidePhone"
+                    label={<span className="text-slate-300 text-xs">Telefon Raqami (ixtiyoriy)</span>}
+                    className="mb-0"
+                  >
+                    <Input placeholder="+998 90 123 45 67" />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="newGuideTelegram"
+                    label={<span className="text-slate-300 text-xs">Telegram Usernami (ixtiyoriy)</span>}
+                    className="mb-0"
+                  >
+                    <Input placeholder="@sardor_guide" />
+                  </Form.Item>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Umumiy ma'lumotlar: Shahar, Narx, Davomiylik, Tillar */}
