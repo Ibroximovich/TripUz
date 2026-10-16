@@ -231,6 +231,7 @@ export async function updateBookingStatus(req: Request, res: Response, next: Nex
 export async function createExperience(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const dto = req.body as CreateExperienceDto;
+    console.log('[ADMIN] Creating experience with payload:', JSON.stringify(dto));
     const experience = await adminService.adminCreateExperience(dto);
 
     res.status(201).json({
@@ -238,8 +239,13 @@ export async function createExperience(req: Request, res: Response, next: NextFu
       message: 'Experience created successfully',
       data: experience,
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('[ADMIN CREATE EXPERIENCE ERROR]:', error);
+    res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || 'Xatolik yuz berdi',
+      errorDetail: error.toString(),
+    });
   }
 }
 

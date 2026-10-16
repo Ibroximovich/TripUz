@@ -530,6 +530,7 @@ export async function getCommissionReport(): Promise<CommissionReport[]> {
 
 export async function adminCreateExperience(data: CreateExperienceDto) {
   let targetGuideId = data.guideId;
+  console.log('[ADMIN] adminCreateExperience received targetGuideId:', targetGuideId, 'newGuideEmail:', (data as any).newGuideEmail);
 
   // Agar mavjud gid tanlanmagan bo'lsa, lekin yangi gid ma'lumotlari berilgan bo'lsa
   if (!targetGuideId && (data as any).newGuideName && (data as any).newGuideEmail) {
@@ -539,6 +540,7 @@ export async function adminCreateExperience(data: CreateExperienceDto) {
     });
 
     if (!guideUser) {
+      console.log('[ADMIN] Creating new guide user for email:', email);
       guideUser = await prisma.user.create({
         data: {
           email,
@@ -550,7 +552,9 @@ export async function adminCreateExperience(data: CreateExperienceDto) {
           role: 'GUIDE',
         },
       });
+      console.log('[ADMIN] New guide user created with id:', guideUser.id);
     } else {
+      console.log('[ADMIN] Found existing user for email:', email, 'updating to GUIDE');
       // Agar foydalanuvchi allaqachon mavjud bo'lsa, rolini GUIDE qilamiz va ma'lumotlarini yangilaymiz
       guideUser = await prisma.user.update({
         where: { id: guideUser.id },
@@ -562,6 +566,7 @@ export async function adminCreateExperience(data: CreateExperienceDto) {
           isCustomAvatarUploaded: (data as any).newGuideAvatar ? true : guideUser.isCustomAvatarUploaded,
         },
       });
+      console.log('[ADMIN] Existing guide user updated:', guideUser.id);
     }
 
     targetGuideId = guideUser.id;
@@ -579,6 +584,7 @@ export async function adminCreateExperience(data: CreateExperienceDto) {
     throw new HttpError(404, "Tanlangan gid topilmadi");
   }
 
+  console.log('[ADMIN] Passing guideId to createExperience:', targetGuideId);
   data.guideId = targetGuideId;
   return createExpService(data);
 }
