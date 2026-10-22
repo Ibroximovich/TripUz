@@ -1,13 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Spin, Tag, Button, Progress, Alert } from 'antd';
+import {  Spin, Tag, Button, Progress, Alert } from 'antd';
 import {
   DollarOutlined,
   ShoppingOutlined,
   TeamOutlined,
   CompassOutlined,
   ReloadOutlined,
-  ArrowUpOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,

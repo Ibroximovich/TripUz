@@ -10,8 +10,6 @@ import {
   Select,
   message,
   Popconfirm,
-  Descriptions,
-  Divider,
   Avatar,
   Image,
   Form,
@@ -31,13 +29,10 @@ import {
   ClockCircleOutlined,
   TeamOutlined,
   EnvironmentOutlined,
-  GlobalOutlined,
-  CheckCircleOutlined,
   ExportOutlined,
   PlusOutlined,
   UploadOutlined,
   CloseOutlined,
-  PictureOutlined,
   CalendarOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -73,7 +68,7 @@ export const AdminExperiences: React.FC = () => {
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       updateExperienceStatus(id, isActive),
-    onSuccess: (updatedExp, variables) => {
+    onSuccess: (_, variables) => {
       message.success(
         variables.isActive ? 'Tur muvaffaqiyatli faollashtirildi' : 'Tur yashirildi'
       );
