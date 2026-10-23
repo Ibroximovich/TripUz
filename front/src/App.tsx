@@ -12,6 +12,7 @@ import TouristMyBookings from './pages/TouristMyBookings';
 import { AdminLayout } from './components/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminGuides from './pages/admin/AdminGuides';
+import AdminTourists from './pages/admin/AdminTourists';
 import AdminExperiences from './pages/admin/AdminExperiences';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminReferrals from './pages/admin/AdminReferrals';
@@ -256,6 +257,7 @@ export const App: React.FC = () => {
               >
                 <Route index element={<AdminDashboard />} />
                 <Route path="guides" element={<AdminGuides />} />
+                <Route path="tourists" element={<AdminTourists />} />
                 <Route path="experiences" element={<AdminExperiences />} />
                 <Route path="bookings" element={<AdminBookings />} />
                 <Route path="referrals" element={<AdminReferrals />} />

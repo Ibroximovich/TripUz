@@ -33,6 +33,11 @@ export const AdminLayout: React.FC = () => {
       icon: <TeamOutlined className="text-lg" />,
     },
     {
+      key: '/admin/tourists',
+      label: 'Turistlar',
+      icon: <UserOutlined className="text-lg" />,
+    },
+    {
       key: '/admin/experiences',
       label: 'Turlar Moderatsiyasi',
       icon: <CompassOutlined className="text-lg" />,

@@ -200,6 +200,107 @@ export async function getAdminGuides(query: AdminGuidesQuery) {
   };
 }
 
+// ==========================================
+// 2.1. TURISTLAR BOSHQARUVI (GET /api/admin/tourists)
+// ==========================================
+export interface AdminTouristsQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export async function getAdminTourists(query: AdminTouristsQuery) {
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
+  const skip = (page - 1) * limit;
+
+  const whereClause: Prisma.UserWhereInput = {
+    role: 'TOURIST',
+  };
+
+  if (query.search && query.search.trim()) {
+    const search = query.search.trim();
+    whereClause.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+      { phone: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  const [total, tourists] = await Promise.all([
+    prisma.user.count({ where: whereClause }),
+    prisma.user.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        telegramHandle: true,
+        language: true,
+        createdAt: true,
+        bookings: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            voucherCode: true,
+            participantsCount: true,
+            totalPrice: true,
+            status: true,
+            paymentStatus: true,
+            createdAt: true,
+            experience: {
+              select: {
+                id: true,
+                title: true,
+                city: true,
+              },
+            },
+            availableDate: {
+              select: {
+                date: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
+
+  const data = tourists.map((tourist) => {
+    const paidBookings = tourist.bookings.filter((b) => b.paymentStatus === PaymentStatus.PAID);
+    const totalSpent = paidBookings.reduce((sum, b) => sum + Number(b.totalPrice), 0);
+
+    return {
+      id: tourist.id,
+      name: tourist.name,
+      email: tourist.email,
+      phone: tourist.phone,
+      avatar: tourist.avatar,
+      telegramHandle: tourist.telegramHandle,
+      language: tourist.language,
+      createdAt: tourist.createdAt,
+      bookingsCount: tourist.bookings.length,
+      totalSpent: parseFloat(totalSpent.toFixed(2)),
+      bookings: tourist.bookings,
+    };
+  });
+
+  return {
+    data,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
 export async function updateGuideCommission(guideId: string, commissionRate: number) {
   if (commissionRate < 0 || commissionRate > 100) {
     throw new HttpError(400, 'Commission rate must be between 0 and 100 percent');

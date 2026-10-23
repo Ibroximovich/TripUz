@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getAdminStats,
   getAdminGuides,
+  getAdminTourists,
   updateGuideCommission,
   getAdminExperiences,
   updateExperienceStatus,
@@ -38,6 +39,12 @@ router.get('/stats', getAdminStats);
  */
 router.get('/guides', getAdminGuides);
 router.patch('/guides/:id', updateGuideCommission);
+
+/**
+ * 2.1. TURISTLAR BOSHQARUVI
+ * GET /api/admin/tourists
+ */
+router.get('/tourists', getAdminTourists);
 
 /**
  * 3. TURLARNI MODERATSIYA QILISH VA SANALAR BOSHQARUVI

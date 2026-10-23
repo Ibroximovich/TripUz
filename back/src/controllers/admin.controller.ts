@@ -48,6 +48,34 @@ export async function getAdminGuides(req: Request, res: Response, next: NextFunc
 }
 
 /**
+ * GET /api/admin/tourists
+ * Barcha turistlar ro'yxati, paginatsiya va qidiruv bilan
+ */
+export async function getAdminTourists(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { page, limit, search } = req.query as {
+      page?: string;
+      limit?: string;
+      search?: string;
+    };
+
+    const result = await adminService.getAdminTourists({
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      search,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
  * PATCH /api/admin/guides/:id
  * Gid komissiya foizini yangilash
  */

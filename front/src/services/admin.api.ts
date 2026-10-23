@@ -53,6 +53,44 @@ export interface AdminGuideItem {
   totalRevenue: number;
 }
 
+export interface AdminTouristsQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface AdminTouristBookingItem {
+  id: string;
+  voucherCode: string;
+  participantsCount: number;
+  totalPrice: number;
+  status: string;
+  paymentStatus: string;
+  createdAt: string;
+  experience?: {
+    id: string;
+    title: string;
+    city: string;
+  };
+  availableDate?: {
+    date: string;
+  };
+}
+
+export interface AdminTouristItem {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatar: string | null;
+  telegramHandle: string | null;
+  language: string | null;
+  createdAt: string;
+  bookingsCount: number;
+  totalSpent: number;
+  bookings: AdminTouristBookingItem[];
+}
+
 export interface AdminExperiencesQuery {
   page?: number;
   limit?: number;
@@ -102,6 +140,16 @@ export async function updateGuideCommission(guideId: string, commissionRate: num
     `/admin/guides/${guideId}`,
     { commissionRate }
   );
+  return res.data;
+}
+
+// 2.1. Tourists
+export async function getAdminTourists(params?: AdminTouristsQuery) {
+  const res = await api.get<{
+    success: boolean;
+    data: AdminTouristItem[];
+    pagination: { total: number; page: number; limit: number; totalPages: number };
+  }>('/admin/tourists', { params });
   return res.data;
 }
 
