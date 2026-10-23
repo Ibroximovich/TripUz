@@ -136,6 +136,14 @@ export async function createAdminExperience(data: any) {
   return res.data;
 }
 
+export async function updateAdminExperience(id: string, data: any) {
+  const res = await api.put<{ success: boolean; message: string; data: any }>(
+    `/admin/experiences/${id}`,
+    data
+  );
+  return res.data;
+}
+
 export async function addExperienceDate(experienceId: string, data: { date: string; slots?: number; maxCapacity?: number }) {
   const res = await api.post<{ success: boolean; message: string; data: any }>(
     `/admin/experiences/${experienceId}/dates`,

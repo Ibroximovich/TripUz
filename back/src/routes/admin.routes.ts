@@ -9,6 +9,7 @@ import {
   getAdminBookings,
   updateBookingStatus,
   createExperience,
+  updateExperience,
   addExperienceDate,
   deleteExperienceDate,
   getCommissions,
@@ -42,6 +43,7 @@ router.patch('/guides/:id', updateGuideCommission);
  * 3. TURLARNI MODERATSIYA QILISH VA SANALAR BOSHQARUVI
  * GET /api/admin/experiences
  * POST /api/admin/experiences
+ * PUT /api/admin/experiences/:id
  * PATCH /api/admin/experiences/:id/status
  * DELETE /api/admin/experiences/:id
  * POST /api/admin/experiences/:id/dates
@@ -49,6 +51,7 @@ router.patch('/guides/:id', updateGuideCommission);
  */
 router.get('/experiences', getAdminExperiences);
 router.post('/experiences', validate(createExperienceSchema), createExperience);
+router.put('/experiences/:id', updateExperience);
 router.patch('/experiences/:id/status', updateExperienceStatus);
 router.delete('/experiences/:id', deleteExperience);
 router.post('/experiences/:id/dates', validate(addAvailableDateSchema), addExperienceDate);

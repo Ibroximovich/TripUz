@@ -333,3 +333,23 @@ export async function deleteExperienceDate(req: Request, res: Response, next: Ne
     next(error);
   }
 }
+
+/**
+ * PUT /api/admin/experiences/:id
+ * Edit an existing experience (admin)
+ */
+export async function updateExperience(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { id } = req.params;
+    const dto = req.body;
+    const updated = await adminService.adminUpdateExperience(id, dto);
+
+    res.status(200).json({
+      success: true,
+      message: 'Tur muvaffaqiyatli tahrirlandi',
+      data: updated,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+}

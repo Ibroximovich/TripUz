@@ -694,3 +694,70 @@ export async function adminDeleteExperienceDate(dateId: string) {
   });
   return { success: true };
 }
+
+/**
+ * 7. TURNI TAHRIRLASH (ADMIN)
+ */
+export async function adminUpdateExperience(experienceId: string, dto: any) {
+  const existing = await prisma.experience.findUnique({
+    where: { id: experienceId },
+  });
+
+  if (!existing) {
+    throw new HttpError(404, 'Tur topilmadi');
+  }
+
+  const priceUsd = dto.priceUsd !== undefined ? Number(dto.priceUsd) : Number(existing.priceUsd || existing.price);
+  const priceUzs = dto.priceUzs !== undefined ? Number(dto.priceUzs) : Math.round(priceUsd * 12800);
+  const durationHours = dto.durationHours !== undefined ? Number(dto.durationHours) : Number(existing.durationHours);
+
+  const mainTitle = dto.title || dto.title_uz || dto.title_en || dto.title_ru || existing.title;
+  const mainDesc = dto.description || dto.description_uz || dto.description_en || dto.description_ru || existing.description;
+  const mainMp = dto.meetingPoint || dto.meetingPointText_uz || dto.meetingPointText || existing.meetingPoint;
+
+  const updated = await prisma.experience.update({
+    where: { id: experienceId },
+    data: {
+      title: mainTitle,
+      title_uz: dto.title_uz ?? existing.title_uz ?? mainTitle,
+      title_en: dto.title_en ?? existing.title_en ?? mainTitle,
+      title_ru: dto.title_ru ?? existing.title_ru ?? mainTitle,
+      description: mainDesc,
+      description_uz: dto.description_uz ?? existing.description_uz ?? mainDesc,
+      description_en: dto.description_en ?? existing.description_en ?? mainDesc,
+      description_ru: dto.description_ru ?? existing.description_ru ?? mainDesc,
+      city: dto.city ?? existing.city,
+      price: priceUsd,
+      priceUsd: priceUsd,
+      priceUzs: priceUzs,
+      durationHours: durationHours,
+      duration: `${durationHours} soat`,
+      meetingPoint: mainMp,
+      meetingPointText: mainMp,
+      meetingPointText_uz: dto.meetingPointText_uz ?? existing.meetingPointText_uz ?? mainMp,
+      meetingPointText_en: dto.meetingPointText_en ?? existing.meetingPointText_en ?? mainMp,
+      meetingPointText_ru: dto.meetingPointText_ru ?? existing.meetingPointText_ru ?? mainMp,
+      meetingPointMapUrl: dto.meetingPointMapUrl !== undefined ? dto.meetingPointMapUrl : existing.meetingPointMapUrl,
+      languages: dto.languages ? (dto.languages as any) : existing.languages,
+      images: dto.images ? (dto.images as any) : existing.images,
+      ...(dto.guideId ? { guideId: dto.guideId } : {}),
+    },
+    include: {
+      guide: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatar: true,
+        },
+      },
+      availableDates: true,
+      _count: {
+        select: { bookings: true, availableDates: true },
+      },
+    },
+  });
+
+  return updated;
+}
