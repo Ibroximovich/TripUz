@@ -15,6 +15,7 @@ import {
   deleteExperienceDate,
   getCommissions,
   getReferrals,
+  deleteUser,
 } from '../controllers/admin.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { requireRole } from '../middlewares/role.middleware';
@@ -45,6 +46,7 @@ router.patch('/guides/:id', updateGuideCommission);
  * GET /api/admin/tourists
  */
 router.get('/tourists', getAdminTourists);
+router.delete('/users/:id', deleteUser);
 
 /**
  * 3. TURLARNI MODERATSIYA QILISH VA SANALAR BOSHQARUVI

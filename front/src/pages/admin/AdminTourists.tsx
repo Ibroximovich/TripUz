@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Table,
   Input,
@@ -8,6 +8,8 @@ import {
   Tag,
   Avatar,
   Badge,
+  Popconfirm,
+  message,
 } from 'antd';
 import {
   UserOutlined,
@@ -23,11 +25,13 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getAdminTourists, type AdminTouristItem } from '../../services/admin.api';
+import { getAdminTourists, deleteAdminUser, type AdminTouristItem } from '../../services/admin.api';
 
 export const AdminTourists: React.FC = () => {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selectedTourist, setSelectedTourist] = useState<AdminTouristItem | null>(null);
@@ -35,6 +39,19 @@ export const AdminTourists: React.FC = () => {
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['admin-tourists', page, search],
     queryFn: () => getAdminTourists({ page, limit: 10, search: search.trim() || undefined }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAdminUser(id),
+    onSuccess: () => {
+      message.success("Turist bazadan muvaffaqiyatli o'chirildi");
+      queryClient.invalidateQueries({ queryKey: ['admin-tourists'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      if (selectedTourist) setSelectedTourist(null);
+    },
+    onError: () => {
+      message.error("Turistni o'chirishda xatolik yuz berdi");
+    },
   });
 
   const getStatusBadge = (status: string) => {
@@ -148,15 +165,35 @@ export const AdminTourists: React.FC = () => {
     {
       title: 'Amallar',
       key: 'actions',
+      width: 140,
+      fixed: 'right' as const,
       render: (_: any, record: AdminTouristItem) => (
-        <Button
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => setSelectedTourist(record)}
-          className="bg-slate-800 text-sky-400 border-slate-700 hover:text-sky-300 hover:border-sky-500 text-xs font-medium"
-        >
-          Batafsil
-        </Button>
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => setSelectedTourist(record)}
+            className="bg-slate-800 text-sky-400 border-slate-700 hover:text-sky-300 hover:border-sky-500 text-xs font-medium"
+          >
+            Batafsil
+          </Button>
+          <Popconfirm
+            title="Turistni o'chirish"
+            description="Ushbu turistni bazadan butunlay o'chirishga ishonchingiz komilmi? Uning barcha buyurtmalari ham o'chadi."
+            okText="Ha, o'chirish"
+            cancelText="Yo'q"
+            okType="danger"
+            onConfirm={() => deleteMutation.mutate(record.id)}
+          >
+            <Button
+              size="small"
+              danger
+              type="text"
+              icon={<DeleteOutlined />}
+              className="hover:bg-rose-500/20"
+            />
+          </Popconfirm>
+        </div>
       ),
     },
   ];
@@ -198,7 +235,7 @@ export const AdminTourists: React.FC = () => {
           columns={columns}
           rowKey="id"
           loading={isLoading}
-          scroll={{ x: 950 }}
+          scroll={{ x: 1050 }}
           pagination={{
             current: page,
             pageSize: 10,

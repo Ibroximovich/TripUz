@@ -862,3 +862,53 @@ export async function adminUpdateExperience(experienceId: string, dto: any) {
 
   return updated;
 }
+
+// ==========================================
+// FOYDALANUVCHINI (GID YOKI TURISTNI) BUTUNLAY O'CHIRISH
+// ==========================================
+export async function adminDeleteUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      experiences: {
+        select: { id: true },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new HttpError(404, 'Foydalanuvchi topilmadi');
+  }
+
+  const expIds = user.experiences.map((e) => e.id);
+
+  return prisma.$transaction(async (tx) => {
+    // 1. Refresh tokenlarni tozalash
+    await tx.refreshToken.deleteMany({
+      where: { userId },
+    });
+
+    // 2. Agar Gid bo'lsa: unga tegishli turlarning buyurtmalari, sanalari va turlarini o'chirish
+    if (expIds.length > 0) {
+      await tx.booking.deleteMany({
+        where: { experienceId: { in: expIds } },
+      });
+      await tx.availableDate.deleteMany({
+        where: { experienceId: { in: expIds } },
+      });
+      await tx.experience.deleteMany({
+        where: { id: { in: expIds } },
+      });
+    }
+
+    // 3. Agar Turist bo'lsa (yoki o'zi buyurtma qilgan bo'lsa): uning buyurtmalarini o'chirish
+    await tx.booking.deleteMany({
+      where: { userId },
+    });
+
+    // 4. Foydalanuvchini Neon bazadan butunlay o'chirish
+    return tx.user.delete({
+      where: { id: userId },
+    });
+  });
+}

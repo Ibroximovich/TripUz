@@ -153,6 +153,11 @@ export async function getAdminTourists(params?: AdminTouristsQuery) {
   return res.data;
 }
 
+export async function deleteAdminUser(userId: string) {
+  const res = await api.delete<{ success: boolean; message: string }>(`/admin/users/${userId}`);
+  return res.data;
+}
+
 // 3. Experiences
 export async function getAdminExperiences(params?: AdminExperiencesQuery) {
   const res = await api.get<{

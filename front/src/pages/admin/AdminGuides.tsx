@@ -11,6 +11,7 @@ import {
   Avatar,
   Space,
   Divider,
+  Popconfirm,
 } from 'antd';
 import {
   SearchOutlined,
@@ -25,8 +26,9 @@ import {
   DollarOutlined,
   CompassOutlined,
   CheckCircleOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
-import { getAdminGuides, updateGuideCommission, type AdminGuideItem } from '../../services/admin.api';
+import { getAdminGuides, updateGuideCommission, deleteAdminUser, type AdminGuideItem } from '../../services/admin.api';
 
 export const AdminGuides: React.FC = () => {
   const queryClient = useQueryClient();
@@ -54,6 +56,19 @@ export const AdminGuides: React.FC = () => {
     },
     onError: () => {
       message.error('Komissiyani yangilashda xatolik yuz berdi');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAdminUser(id),
+    onSuccess: () => {
+      message.success("Gid bazadan muvaffaqiyatli o'chirildi");
+      queryClient.invalidateQueries({ queryKey: ['admin-guides'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      if (profileGuide) setProfileGuide(null);
+    },
+    onError: () => {
+      message.error("Gidni o'chirishda xatolik yuz berdi");
     },
   });
 
@@ -146,15 +161,35 @@ export const AdminGuides: React.FC = () => {
     {
       title: 'Amallar',
       key: 'actions',
+      width: 140,
+      fixed: 'right' as const,
       render: (_: any, record: AdminGuideItem) => (
-        <Button
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => setProfileGuide(record)}
-          className="bg-slate-800 text-sky-400 border-slate-700 hover:text-sky-300 hover:border-sky-500"
-        >
-          Profil
-        </Button>
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => setProfileGuide(record)}
+            className="bg-slate-800 text-sky-400 border-slate-700 hover:text-sky-300 hover:border-sky-500 text-xs font-medium"
+          >
+            Profil
+          </Button>
+          <Popconfirm
+            title="Gidni o'chirish"
+            description="Ushbu gidni bazadan butunlay o'chirishga ishonchingiz komilmi? Uning barcha turlari ham o'chadi."
+            okText="Ha, o'chirish"
+            cancelText="Yo'q"
+            okType="danger"
+            onConfirm={() => deleteMutation.mutate(record.id)}
+          >
+            <Button
+              size="small"
+              danger
+              type="text"
+              icon={<DeleteOutlined />}
+              className="hover:bg-rose-500/20"
+            />
+          </Popconfirm>
+        </div>
       ),
     },
   ];
@@ -196,6 +231,7 @@ export const AdminGuides: React.FC = () => {
           columns={columns}
           rowKey="id"
           loading={isLoading}
+          scroll={{ x: 1050 }}
           pagination={{
             current: page,
             pageSize: 10,

@@ -381,3 +381,21 @@ export async function updateExperience(req: Request, res: Response, next: NextFu
     next(error);
   }
 }
+
+/**
+ * DELETE /api/admin/users/:id
+ * Foydalanuvchini (gid yoki turistni) bazadan butunlay o'chirish
+ */
+export async function deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { id } = req.params;
+    await adminService.adminDeleteUser(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Foydalanuvchi muvaffaqiyatli o\'chirildi',
+    });
+  } catch (error: any) {
+    next(error);
+  }
+}
